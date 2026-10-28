@@ -58,6 +58,9 @@ export class Viewport {
   stats = { fps: 0, ms: 0 };
   private frames = 0;
   private lastStat = performance.now();
+  private ring = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.5, 48).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false }));
+  private glowing: THREE.MeshStandardMaterial | null = null;
   onRendered: (() => void) | null = null;
 
   constructor(private host: HTMLElement, private store: Store) {
@@ -79,6 +82,10 @@ export class Viewport {
     this.mapCam.up.set(0, 0, -1);
     new ResizeObserver(() => this.resize()).observe(host);
     this.canvas.addEventListener("pointerdown", (e) => this.pointerDown(e));
+    this.canvas.addEventListener("dblclick", (e) => this.lookThrough(e));
+    this.ring.renderOrder = 5;
+    this.ring.visible = false;
+    this.scene.add(this.ring);
     store.on((keys) => {
       if (keys.includes("built")) this.setBuilt(store.s.built);
       if (keys.includes("mode") || keys.includes("exploreLocation")) this.frameLocation();
@@ -229,6 +236,20 @@ export class Viewport {
       c.path.visible = s.showCameras;
     }
     const style = s.style;
+    // selection: glow on the entity's own material and a ring at its feet
+    const selE = s.selection?.kind === "entity" ? b.entities[s.selection.index] : null;
+    const glow = selE ? (selE.baseMaterial as THREE.MeshStandardMaterial) : null;
+    if (this.glowing && this.glowing !== glow) this.glowing.emissive.setRGB(0, 0, 0);
+    if (glow) glow.emissive.copy(selE!.color).multiplyScalar(0.35);
+    this.glowing = glow;
+    this.ring.visible = !!selE && selE.location === loc && selE.root.userData.state > 0;
+    if (selE) {
+      this.ring.position.copy(selE.root.position).setY(selE.root.position.y + 0.015);
+      (this.ring.material as THREE.MeshBasicMaterial).color.copy(selE.color);
+      const r = Math.max(0.35, (selE.mesh.geometry.boundingSphere?.radius ?? 0.5) * 0.6);
+      this.ring.scale.setScalar(r / 0.46);
+      if (selE.location && this.ring.parent !== selE.location.group) selE.location.group.add(this.ring);
+    }
     for (const e of b.entities) {
       const st = e.root.userData.state as number;
       const hidden = s.hiddenEntities.has(e.index);
@@ -301,6 +322,23 @@ export class Viewport {
       this.pick(e2);
     };
     this.canvas.addEventListener("pointerup", up);
+  }
+
+  /** Double-click a camera marker in Explore or Map to look through that shot. */
+  private lookThrough(ev: MouseEvent): void {
+    const b = this.built;
+    const s = this.store.s;
+    if (!b || (s.mode !== "explore" && s.mode !== "map")) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((ev.clientX - rect.left) / rect.width) * 2 - 1, -((ev.clientY - rect.top) / rect.height) * 2 + 1);
+    this.ray.setFromCamera(ndc, s.mode === "map" ? this.mapCam : this.orbitCam);
+    const loc = this.activeLocation();
+    const hit = this.ray.intersectObjects(b.cameras.filter((c) => c.location === loc).map((c) => c.marker), true)[0];
+    let o: THREE.Object3D | null = hit?.object ?? null;
+    while (o && o.userData.kind !== "camera") o = o.parent;
+    if (!o) return;
+    const i = b.doc.shots.findIndex((sh) => sh.id === o!.userData.shot);
+    if (i >= 0) this.store.set({ mode: "replica", frame: b.doc.shots[i].start, playing: false, selection: { kind: "shot", index: i } });
   }
 
   private pick(ev: PointerEvent): void {
