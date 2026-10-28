@@ -1,0 +1,12 @@
+.venv/
+.cache/
+__pycache__/
+*.egg-info/
+node_modules/
+viewer/dist/
+data/
+checkpoints/
+runs/
+samples/
+.DS_Store
+.pytest_cache/
