@@ -77,3 +77,52 @@ that appears in the window is **gauge-fixed on its first keyframe in the window*
 Augmentations (all consistent with the labels): colour jitter; **crop-cuts** (zoom a whole shot by a
 random crop, updating `cam_fov`, depth and ids); horizontal flip of the whole clip (mirror x in every
 gauge, swap left and right joints).
+
+## Clarifications and additions (from the data pipeline)
+
+None of these change a key, shape or meaning above; they pin down details and add optional keys.
+
+**Packed clip**
+
+* Extra keys: `ent_ident` i32 [E], entities with the same value are the same person or object
+  (the scene's `identity`: one entity per location visited, or a wardrobe copy). `meta` also holds
+  `cam_jumps` (frames where the generator's camera jumps inside a shot; see
+  `restage/data/GEN_REQUESTS.md`), `continuity` (number of injected errors), `locations`, `entities`.
+* `ids`: the generator's prop ids (1000 + k) are set, so they map to 0. At 64×36, `ids` is the sample
+  at the pixel centre of the aux render (320×180, an exact 5×5 block), and `depth` is the lower median
+  of that block's pixels of the same class (sky, set, or that entity): always a real surface depth,
+  never a blend across an edge.
+* `loc_points` exclude the `sky` / `cloud` prop classes and distant scenery that reaches more than 20%
+  beyond the location bounds (the mountain ring), and are restricted to the filmed region: x/z within
+  30 m of the location's camera and entity positions (whole indoor sets fit inside it).
+* `loc_ground`: area-weighted dominant colour of the up-facing ground surfaces (floor, terrain, road,
+  sidewalk, stage, voxel tops, …) in that region; the environment's hemisphere `ground` if there are none.
+* People: the root (`ent_pos`) is on the ground below the pelvis (for a seated person, below the
+  seat). `ent_height` is the rest-pose top of the skull (skin-coloured head vertices; hair and hats
+  excluded). `ent_size` is the rest (T-pose) bounding box, so x includes the arm span.
+  `ent_colors`: skin = neck and hands, top = front of the torso, bottom = pelvis and thighs, shoes =
+  ankles and toes, hair = the top of the head (a hat if worn, the skin colour if bald). Objects and
+  vehicles: dominant colour in slot 0, the other slots 0.
+* `ent_pose` of vehicles (which have their own skeleton) and animals is identity.
+
+**Batch**
+
+* dtypes: masks and `ent_present` / `ent_visible` are bool; `frames` and `ids` u8; indices i32;
+  everything else f32 (including `depth`). Padding: zeros, except identity `cam_rot`, quaternions
+  (0, 0, 0, 1) and `cam_fov` = 50 (so log-fov losses stay finite under the mask).
+* A single shot with more than Kmax keyframes becomes a window of Kmax consecutive keyframes of it.
+* More than Emax entities: the ones visible in the most keyframes are kept; pixels of the others
+  have `ids` = 255 (ignore in losses).
+* Crop-cuts are exact virtual cameras at the same position: zoom z ∈ [1.15, 2] (fov' = 2 atan(tan(fov/2)/z))
+  plus a small yaw/pitch toward an off-centre crop, so `cam_rot` changes as well as `cam_fov`. Frames
+  are warped by the homography, `ids` / `depth` re-sampled (depth re-expressed along the new axis), and
+  an entity that leaves the frame loses `ent_visible`. Crops happen before gauge fixing, so a cropped
+  anchor keyframe still sits at (0, y, 0) looking toward −Z.
+* The anchor heading uses the camera's −Z; for a camera looking straight down it uses its +Y.
+* Mirror: M = diag(−1, 1, 1) in every gauge; cameras R → M R M, positions → M p, quaternions
+  (x, y, z, w) → (x, −y, −z, w), and `ent_pose[j]` ← reflect(`ent_pose[swap(j)]`) with left/right joints
+  swapped; frames, depth and ids flip horizontally.
+* Extra keys: `key_frame` [B, Kmax] (video frame), `shot_size`, `shot_move` [B, Smax], `shot_zoom`
+  [B, Smax] (crop-cut zoom, 1 = none), `ent_ident` [B, Emax] (window-local identity index), `mirrored` [B],
+  `clip_id` [B] (index into the loader's file list), `batch_mask` [B] (false for repeats that fill the
+  last batch in epoch mode).

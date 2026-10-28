@@ -4,10 +4,10 @@ __pycache__/
 *.egg-info/
 node_modules/
 viewer/dist/
-data/
-checkpoints/
-runs/
-samples/
+/data/
+/checkpoints/
+/runs/
+/samples/
 .DS_Store
 .pytest_cache/
 research/05_experiments/out/*.mp4
