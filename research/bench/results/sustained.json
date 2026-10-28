@@ -1,0 +1,62 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:18:28",
+  "windows": [
+    {
+      "t_s": 15,
+      "ms_step": 190.5,
+      "img_per_s": 168.0
+    },
+    {
+      "t_s": 30,
+      "ms_step": 190.3,
+      "img_per_s": 168.1
+    },
+    {
+      "t_s": 45,
+      "ms_step": 190.1,
+      "img_per_s": 168.3
+    },
+    {
+      "t_s": 60,
+      "ms_step": 190.5,
+      "img_per_s": 168.0
+    },
+    {
+      "t_s": 75,
+      "ms_step": 190.4,
+      "img_per_s": 168.1
+    },
+    {
+      "t_s": 90,
+      "ms_step": 190.3,
+      "img_per_s": 168.1
+    },
+    {
+      "t_s": 105,
+      "ms_step": 191.2,
+      "img_per_s": 167.4
+    },
+    {
+      "t_s": 120,
+      "ms_step": 192.3,
+      "img_per_s": 166.4
+    },
+    {
+      "t_s": 135,
+      "ms_step": 191.9,
+      "img_per_s": 166.8
+    }
+  ],
+  "pmset_therm": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded\n",
+  "batch": 32,
+  "steady_TFLOPS": 4.6,
+  "vit_s_inference_img_per_s_b64_bf16": 635.7
+}

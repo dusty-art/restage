@@ -1,0 +1,157 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 16:46:37",
+  "rows": [
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.251,
+      "TFLOPS": 8.55
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 1.877,
+      "TFLOPS": 9.15
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 16.642,
+      "TFLOPS": 8.26
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.299,
+      "TFLOPS": 6.21
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.233,
+      "TFLOPS": 5.98
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.315,
+      "TFLOPS": 5.9
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.169,
+      "TFLOPS": 12.73
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 1.27,
+      "TFLOPS": 13.53
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 10.159,
+      "TFLOPS": 13.53
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.227,
+      "TFLOPS": 8.19
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.178,
+      "TFLOPS": 7.81
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.16,
+      "TFLOPS": 11.6
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.176,
+      "TFLOPS": 12.2
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 1.304,
+      "TFLOPS": 13.18
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 10.902,
+      "TFLOPS": 12.61
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.227,
+      "TFLOPS": 8.2
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.17,
+      "TFLOPS": 8.19
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.169,
+      "TFLOPS": 11.01
+    }
+  ]
+}

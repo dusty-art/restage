@@ -1,0 +1,97 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:19:47",
+  "coremltools": "9.0",
+  "rows": [
+    {
+      "batch": 1,
+      "compute_units": "CPU_ONLY",
+      "ms_per_call": 5.05,
+      "img_per_s": 198.0,
+      "rel_err_vs_fp32": 0.0103
+    },
+    {
+      "batch": 1,
+      "compute_units": "CPU_AND_GPU",
+      "ms_per_call": 3.19,
+      "img_per_s": 313.5,
+      "rel_err_vs_fp32": 0.0013
+    },
+    {
+      "batch": 1,
+      "compute_units": "CPU_AND_NE",
+      "ms_per_call": 1.97,
+      "img_per_s": 506.3,
+      "rel_err_vs_fp32": 0.0083
+    },
+    {
+      "batch": 1,
+      "compute_units": "ALL",
+      "ms_per_call": 2.01,
+      "img_per_s": 497.4,
+      "rel_err_vs_fp32": 0.0083
+    },
+    {
+      "batch": 1,
+      "compute_units": "plan(ALL)",
+      "ms_per_call": "unavailable: RuntimeError: {\n    NSLocalizedDescription = \"The model is not found at URL: file:///var/folders/mt/r04vt7_53qb83tglm773fl5m0000gn/T/v"
+    },
+    {
+      "batch": 1,
+      "compute_units": "convert_seconds",
+      "ms_per_call": 2.4
+    },
+    {
+      "batch": 8,
+      "compute_units": "CPU_ONLY",
+      "ms_per_call": 28.22,
+      "img_per_s": 283.5,
+      "rel_err_vs_fp32": 0.0119
+    },
+    {
+      "batch": 8,
+      "compute_units": "CPU_AND_GPU",
+      "ms_per_call": 8.22,
+      "img_per_s": 973.0,
+      "rel_err_vs_fp32": 0.0013
+    },
+    {
+      "batch": 8,
+      "compute_units": "CPU_AND_NE",
+      "ms_per_call": 23.57,
+      "img_per_s": 339.5,
+      "rel_err_vs_fp32": 0.0109
+    },
+    {
+      "batch": 8,
+      "compute_units": "ALL",
+      "ms_per_call": 23.57,
+      "img_per_s": 339.4,
+      "rel_err_vs_fp32": 0.0109
+    },
+    {
+      "batch": 8,
+      "compute_units": "convert_seconds",
+      "ms_per_call": 3.4
+    },
+    {
+      "batch": 1,
+      "compute_units": "MLX GPU bf16 (compiled)",
+      "ms_per_call": 2.69,
+      "img_per_s": 372.3
+    },
+    {
+      "batch": 8,
+      "compute_units": "MLX GPU bf16 (compiled)",
+      "ms_per_call": 13.22,
+      "img_per_s": 605.0
+    }
+  ]
+}

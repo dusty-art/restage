@@ -1,0 +1,72 @@
+{
+ "spacing=1 merange=16": {
+  "end_drift_deg": 0.523,
+  "median_link_err_deg": 0.024,
+  "max_link_err_deg": 0.15,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=1 merange=64": {
+  "end_drift_deg": 0.708,
+  "median_link_err_deg": 0.02,
+  "max_link_err_deg": 0.21,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=5 merange=16": {
+  "end_drift_deg": 0.495,
+  "median_link_err_deg": 0.031,
+  "max_link_err_deg": 0.08,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=5 merange=64": {
+  "end_drift_deg": 0.596,
+  "median_link_err_deg": 0.03,
+  "max_link_err_deg": 0.1,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=10 merange=16": {
+  "end_drift_deg": 0.347,
+  "median_link_err_deg": 0.043,
+  "max_link_err_deg": 0.14,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=10 merange=64": {
+  "end_drift_deg": 0.384,
+  "median_link_err_deg": 0.039,
+  "max_link_err_deg": 0.1,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=30 merange=16": {
+  "end_drift_deg": 0.384,
+  "median_link_err_deg": 0.071,
+  "max_link_err_deg": 0.27,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=30 merange=64": {
+  "end_drift_deg": 0.299,
+  "median_link_err_deg": 0.075,
+  "max_link_err_deg": 0.26,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=89 merange=16": {
+  "end_drift_deg": 5.066,
+  "median_link_err_deg": 0.205,
+  "max_link_err_deg": 9.86,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ },
+ "spacing=89 merange=64": {
+  "end_drift_deg": 0.704,
+  "median_link_err_deg": 0.16,
+  "max_link_err_deg": 0.77,
+  "failed_links": 0,
+  "gt_total_deg": 25.18
+ }
+}

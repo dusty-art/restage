@@ -1,0 +1,168 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:22:53",
+  "rows": [
+    {
+      "op": "grid_sample 2D bilinear (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "grid_sample 3D (volumetric, +bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "interpolate bicubic antialias",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "conv3d (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "linalg.svd (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "GPU: not supported; CPU stream fwd ok, bwd: [Primitive::vjp] Not implemented for SVD."
+    },
+    {
+      "op": "linalg.eigh",
+      "torch_mps": "ok",
+      "mlx_gpu": "GPU: not supported; CPU stream fwd ok, bwd: [Primitive::vjp] Not implemented for Eigh."
+    },
+    {
+      "op": "linalg.inv (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "GPU: not supported; CPU stream fwd ok, bwd: [Primitive::vjp] Not implemented for Inverse."
+    },
+    {
+      "op": "linalg.solve",
+      "torch_mps": "ok",
+      "mlx_gpu": "FAIL: [linalg::solve] This op is not yet supported on the GPU. Explicitly pass a CPU stream to r"
+    },
+    {
+      "op": "linalg.det (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "linalg.qr",
+      "torch_mps": "ok",
+      "mlx_gpu": "GPU: not supported; CPU stream fwd ok, bwd: [Primitive::vjp] Not implemented for QRF."
+    },
+    {
+      "op": "linalg.cholesky",
+      "torch_mps": "ok",
+      "mlx_gpu": "GPU: not supported; CPU stream fwd ok, bwd: [Primitive::vjp] Not implemented for Cholesky."
+    },
+    {
+      "op": "linalg.lstsq",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "scatter_reduce amax (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "index_put accumulate (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "sort / argsort 1M",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "topk k=64",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "unique",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "nonzero",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "searchsorted",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "cumsum (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "cdist (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "fft.rfft2",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "float64 tensor",
+      "torch_mps": "FAIL: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64.",
+      "mlx_gpu": "FAIL: float64 is not supported on the GPU"
+    },
+    {
+      "op": "complex64 matmul",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "erfinv",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "F.rms_norm (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "SDPA with bool mask (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "nn.functional.unfold",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "max_pool3d (+bwd)",
+      "torch_mps": "ok",
+      "mlx_gpu": "ok"
+    },
+    {
+      "op": "torch.histc",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    },
+    {
+      "op": "bincount",
+      "torch_mps": "ok",
+      "mlx_gpu": "no built-in op"
+    }
+  ]
+}

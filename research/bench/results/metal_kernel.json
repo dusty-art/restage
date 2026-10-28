@@ -1,0 +1,87 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:13:36",
+  "part_a_silu": {
+    "max_abs_err": 4.76837158203125e-07,
+    "custom_ms": 1.244,
+    "mlx_ops_ms": 2.81,
+    "mlx_compiled_ms": 1.241,
+    "custom_GBps": 107.9
+  },
+  "part_b_softtri": [
+    {
+      "N": 1000,
+      "cull": false,
+      "fwd_ms": 0.75,
+      "fwd_mem_GB": 0.001,
+      "fwdbwd_ms": 1.8,
+      "fwdbwd_mem_GB": 0.004,
+      "loss_rel_err": 0.00017457932699471712,
+      "grad_max_rel_err": 0.004969512112438679
+    },
+    {
+      "N": 1000,
+      "cull": true,
+      "fwd_ms": 1.1,
+      "fwd_mem_GB": 0.001,
+      "fwdbwd_ms": 2.68,
+      "fwdbwd_mem_GB": 0.004,
+      "loss_rel_err": 0.001519035897217691,
+      "grad_max_rel_err": 0.02126416563987732
+    },
+    {
+      "N": 10000,
+      "cull": false,
+      "fwd_ms": 5.2,
+      "fwd_mem_GB": 0.004,
+      "fwdbwd_ms": 12.77,
+      "fwdbwd_mem_GB": 0.02,
+      "loss_rel_err": 0.00020963976567145437,
+      "grad_max_rel_err": 0.010191376321017742
+    },
+    {
+      "N": 10000,
+      "cull": true,
+      "fwd_ms": 6.33,
+      "fwd_mem_GB": 0.004,
+      "fwdbwd_ms": 20.43,
+      "fwdbwd_mem_GB": 0.02,
+      "loss_rel_err": 0.0002354602620471269,
+      "grad_max_rel_err": 0.010301642119884491
+    },
+    {
+      "N": 100000,
+      "cull": false,
+      "fwd_ms": 51.62,
+      "fwd_mem_GB": 0.022,
+      "fwdbwd_ms": 127.23,
+      "fwdbwd_mem_GB": 0.169
+    },
+    {
+      "N": 100000,
+      "cull": true,
+      "fwd_ms": 63.72,
+      "fwd_mem_GB": 0.022,
+      "fwdbwd_ms": 202.79,
+      "fwdbwd_mem_GB": 0.169
+    }
+  ],
+  "tf32_off_check": {
+    "note": "Same comparison with MLX_ENABLE_TF32=0 (true fp32 matmul in the plain-op reference). The ~1% grad error above comes from TF32 in the reference, not the kernel.",
+    "N1000": {
+      "loss_rel_err": 1.4e-07,
+      "grad_max_rel_err": 1.29e-06
+    },
+    "N10000": {
+      "loss_rel_err": 0.0,
+      "grad_max_rel_err": 2.55e-06
+    }
+  }
+}

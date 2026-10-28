@@ -1,0 +1,157 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 16:47:07",
+  "rows": [
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.647,
+      "TFLOPS": 3.32
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 5.168,
+      "TFLOPS": 3.32
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 48.79,
+      "TFLOPS": 2.82
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.594,
+      "TFLOPS": 3.13
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.454,
+      "TFLOPS": 3.07
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp32",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.586,
+      "TFLOPS": 3.17
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.164,
+      "TFLOPS": 13.06
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 1.225,
+      "TFLOPS": 14.02
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 9.739,
+      "TFLOPS": 14.11
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.164,
+      "TFLOPS": 11.31
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.129,
+      "TFLOPS": 10.78
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.188,
+      "TFLOPS": 9.91
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "1024x1024x1024",
+      "chain": 69,
+      "ms_per_matmul": 0.169,
+      "TFLOPS": 12.7
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "2048x2048x2048",
+      "chain": 8,
+      "ms_per_matmul": 1.236,
+      "TFLOPS": 13.9
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "4096x4096x4096",
+      "chain": 1,
+      "ms_per_matmul": 9.854,
+      "TFLOPS": 13.95
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "1576x384x1536",
+      "chain": 80,
+      "ms_per_matmul": 0.163,
+      "TFLOPS": 11.43
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "1576x384x1152",
+      "chain": 107,
+      "ms_per_matmul": 0.126,
+      "TFLOPS": 11.05
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "shape": "1576x1536x384",
+      "chain": 80,
+      "ms_per_matmul": 0.179,
+      "TFLOPS": 10.39
+    }
+  ]
+}

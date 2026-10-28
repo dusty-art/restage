@@ -1,0 +1,258 @@
+{
+ "n_frames": 255,
+ "resolution": "640x360",
+ "fps": 30,
+ "x264_default": {
+  "encode_seconds": 0.42,
+  "bytes": 439847,
+  "I_frames": [
+   0,
+   90,
+   150,
+   210
+  ],
+  "mvdump": "frames=255 mvs=304640 seconds=0.127 fps=2000.1",
+  "cuts": {
+   "true_cuts": [
+    90,
+    150,
+    210
+   ],
+   "I_frames_after_0": [
+    90,
+    150,
+    210
+   ],
+   "low_inter_coverage_non_I": [],
+   "median_inter_coverage": 1.295
+  },
+  "rotation": {
+   "f_est": 510.0,
+   "f_true": 500.0,
+   "n_frames_used": 251,
+   "median_per_frame_rot_err_deg": 0.224924009112321,
+   "median_per_frame_gt_rot_deg": 0.28095605200492785,
+   "shot_drift": {
+    "0": {
+     "frames": 90,
+     "gt_total_deg": 25.176511850752178,
+     "drift_deg": 27.32548362559874
+    },
+    "1": {
+     "frames": 60,
+     "gt_total_deg": 12.999999999999968,
+     "drift_deg": 9.777385365375407
+    },
+    "2": {
+     "frames": 60,
+     "gt_total_deg": 12.646796665982661,
+     "drift_deg": 11.69518082559836
+    },
+    "3": {
+     "frames": 45,
+     "gt_total_deg": 15.225658403399414,
+     "drift_deg": 16.579542801654437
+    }
+   }
+  },
+  "entity": {
+   "outlier_precision": 0.09527554631762261,
+   "entity_recall": 0.902127659574468
+  },
+  "mvdump_nowrite": "frames=255 mvs=304640 seconds=0.091 fps=2793.9"
+ },
+ "x264_fixedgop": {
+  "encode_seconds": 3.28,
+  "bytes": 484050,
+  "I_frames": [
+   0,
+   60,
+   120,
+   180,
+   240
+  ],
+  "mvdump": "frames=255 mvs=299414 seconds=0.107 fps=2388.8",
+  "cuts": {
+   "true_cuts": [
+    90,
+    150,
+    210
+   ],
+   "I_frames_after_0": [
+    60,
+    120,
+    180,
+    240
+   ],
+   "low_inter_coverage_non_I": [
+    92,
+    152,
+    212
+   ],
+   "median_inter_coverage": 1.2989
+  },
+  "rotation": {
+   "f_est": 515.0,
+   "f_true": 500.0,
+   "n_frames_used": 245,
+   "median_per_frame_rot_err_deg": 0.21969579862498456,
+   "median_per_frame_gt_rot_deg": 0.28095605200492785,
+   "shot_drift": {
+    "0": {
+     "frames": 90,
+     "gt_total_deg": 25.176511850752178,
+     "drift_deg": 27.140281914782147
+    },
+    "1": {
+     "frames": 60,
+     "gt_total_deg": 12.999999999999968,
+     "drift_deg": 8.339139198797197
+    },
+    "2": {
+     "frames": 60,
+     "gt_total_deg": 12.646796665982661,
+     "drift_deg": 10.209766506285659
+    },
+    "3": {
+     "frames": 45,
+     "gt_total_deg": 15.225658403399414,
+     "drift_deg": 9.392898860788588
+    }
+   }
+  },
+  "entity": {
+   "outlier_precision": 0.10150756854677762,
+   "entity_recall": 0.9047619047619048
+  },
+  "mvdump_nowrite": "frames=255 mvs=299414 seconds=0.083 fps=3068.0"
+ },
+ "x264_probe": {
+  "encode_seconds": 0.1,
+  "bytes": 3496676,
+  "I_frames": [
+   0,
+   250
+  ],
+  "mvdump": "frames=255 mvs=213247 seconds=0.101 fps=2513.4",
+  "cuts": {
+   "true_cuts": [
+    90,
+    150,
+    210
+   ],
+   "I_frames_after_0": [
+    250
+   ],
+   "low_inter_coverage_non_I": [
+    90,
+    150,
+    210
+   ],
+   "median_inter_coverage": 0.9522
+  },
+  "rotation": {
+   "f_est": 540.0,
+   "f_true": 500.0,
+   "n_frames_used": 250,
+   "median_per_frame_rot_err_deg": 0.04045130960146674,
+   "median_per_frame_gt_rot_deg": 0.2809560520036306,
+   "shot_drift": {
+    "0": {
+     "frames": 90,
+     "gt_total_deg": 25.176511850752178,
+     "drift_deg": 1.7472061850492617
+    },
+    "1": {
+     "frames": 60,
+     "gt_total_deg": 12.999999999999968,
+     "drift_deg": 2.8414242939977785
+    },
+    "2": {
+     "frames": 60,
+     "gt_total_deg": 12.646796665982661,
+     "drift_deg": 1.875736234052707
+    },
+    "3": {
+     "frames": 45,
+     "gt_total_deg": 15.225658403399414,
+     "drift_deg": 0.5533459824034866
+    }
+   }
+  },
+  "entity": {
+   "outlier_precision": 0.29276003793866584,
+   "entity_recall": 0.8707099200752233
+  },
+  "mvdump_nowrite": "frames=255 mvs=213247 seconds=0.098 fps=2593.7"
+ },
+ "x265_default": {
+  "encode_seconds": 0.75,
+  "bytes": 204302,
+  "I_frames": [
+   0,
+   90,
+   150,
+   210
+  ]
+ },
+ "svtav1_default": {
+  "encode_seconds": 0.51,
+  "bytes": 264672,
+  "I_frames": [
+   0,
+   161
+  ]
+ },
+ "optical_flow_cpu": {
+  "farneback_fps": 72.8567569860148,
+  "dis_medium_fps": 116.73310162196412
+ },
+ "codec_judge_shot1": {
+  "full": {
+   "no_scene_model(raw video)": 73001,
+   "yaw_offset_0.0deg": 23388,
+   "yaw_offset_0.1deg": 120034,
+   "yaw_offset_0.25deg": 111882,
+   "yaw_offset_0.5deg": 112593,
+   "yaw_offset_1.0deg": 112672,
+   "yaw_offset_2.0deg": 113471,
+   "yaw_offset_4.0deg": 116225,
+   "yaw_offset_8.0deg": 118466,
+   "focal_450px(true 500)": 162403,
+   "focal_490px(true 500)": 137232,
+   "focal_510px(true 500)": 132894,
+   "focal_550px(true 500)": 142732,
+   "wrong_location": 103970
+  },
+  "coarse": {
+   "no_scene_model(raw video)": 10050,
+   "yaw_offset_0.0deg": 6509,
+   "yaw_offset_0.1deg": 8178,
+   "yaw_offset_0.25deg": 9621,
+   "yaw_offset_0.5deg": 11087,
+   "yaw_offset_1.0deg": 12314,
+   "yaw_offset_2.0deg": 12598,
+   "yaw_offset_4.0deg": 12352,
+   "yaw_offset_8.0deg": 12264,
+   "focal_450px(true 500)": 15323,
+   "focal_490px(true 500)": 12160,
+   "focal_510px(true 500)": 12099,
+   "focal_550px(true 500)": 14690,
+   "wrong_location": 11664
+  }
+ },
+ "codec_judge_mc_shot1": {
+  "frames_given_blank_reference": 697868,
+  "frames_given_previous_frame(ordinary video coding)": 257486,
+  "yaw_offset_0.0deg": 161151,
+  "yaw_offset_0.25deg": 296903,
+  "yaw_offset_0.5deg": 316972,
+  "yaw_offset_1.0deg": 316713,
+  "yaw_offset_2.0deg": 350424,
+  "yaw_offset_4.0deg": 371826,
+  "yaw_offset_8.0deg": 397480,
+  "focal_450px(true 500)": 409998,
+  "focal_550px(true 500)": 453813,
+  "wrong_location": 711723
+ }
+}

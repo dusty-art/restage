@@ -1,0 +1,159 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:11:31",
+  "rows": [
+    {
+      "lib": "mlx",
+      "method": "tri_soft",
+      "N": 1000,
+      "fwd_ms": 27.22,
+      "fwd_mem_GB": 0.39,
+      "fwdbwd_ms": 95.37,
+      "fwdbwd_mem_GB": 1.84,
+      "checksum_img": 23436.921875,
+      "checksum_grad": {
+        "v": 0.07852400094270706,
+        "z": 0.15899807214736938,
+        "col": 0.03873613476753235
+      },
+      "peak_footprint_GB": 1.89
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "tri_soft",
+      "N": 1000,
+      "fwd_ms": 3.62,
+      "fwd_mem_GB": 0.07,
+      "fwdbwd_ms": 72.11,
+      "fwdbwd_mem_GB": 1.97,
+      "checksum_img": 23436.921875,
+      "checksum_grad": {
+        "v": 0.07852400094270706,
+        "z": 0.15899807214736938,
+        "col": 0.03873613476753235
+      },
+      "peak_footprint_GB": 2.03
+    },
+    {
+      "lib": "mlx-stream",
+      "method": "tri_soft",
+      "N": 1000,
+      "fwd_ms": 3.02,
+      "fwd_mem_GB": 0.07,
+      "fwdbwd_ms": 109.36,
+      "fwdbwd_mem_GB": 1.9,
+      "checksum_img": 23436.921875,
+      "checksum_grad": {
+        "v": 0.07852400094270706,
+        "z": 0.15899807214736938,
+        "col": 0.03873613476753235
+      },
+      "peak_footprint_GB": 1.96
+    },
+    {
+      "lib": "torch",
+      "method": "tri_soft",
+      "N": 1000,
+      "fwd_ms": 46.99,
+      "fwdbwd_ms": 112.24,
+      "checksum_img": 23454.060546875,
+      "checksum_grad": {
+        "v": 0.07851837575435638,
+        "z": 0.15893122553825378,
+        "col": 0.0387774258852005
+      },
+      "peak_footprint_GB": 2.35
+    },
+    {
+      "lib": "mlx",
+      "method": "tri_soft",
+      "N": 10000,
+      "fwd_ms": "skipped: one lazy graph, ~6 GB at 10k (measured), >60 GB at 100k (est.)"
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "tri_soft",
+      "N": 10000,
+      "fwd_ms": "skipped: one lazy graph, ~6 GB at 10k (measured), >60 GB at 100k (est.)"
+    },
+    {
+      "lib": "mlx-stream",
+      "method": "tri_soft",
+      "N": 10000,
+      "fwd_ms": 26.19,
+      "fwd_mem_GB": 0.07,
+      "fwdbwd_ms": 991.97,
+      "fwdbwd_mem_GB": 1.95,
+      "checksum_img": 25111.53515625,
+      "checksum_grad": {
+        "v": 0.18831685185432434,
+        "z": 0.21559932827949524,
+        "col": 0.01990315318107605
+      },
+      "peak_footprint_GB": 3.6
+    },
+    {
+      "lib": "torch",
+      "method": "tri_soft",
+      "N": 10000,
+      "fwd_ms": 454.33,
+      "fwdbwd_ms": 1589.61,
+      "checksum_img": 25129.02734375,
+      "checksum_grad": {
+        "v": 0.18880395591259003,
+        "z": 0.21610835194587708,
+        "col": 0.01995275169610977
+      },
+      "peak_footprint_GB": 2.45
+    },
+    {
+      "lib": "mlx",
+      "method": "tri_soft",
+      "N": 100000,
+      "fwd_ms": "skipped: one lazy graph, ~6 GB at 10k (measured), >60 GB at 100k (est.)"
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "tri_soft",
+      "N": 100000,
+      "fwd_ms": "skipped: one lazy graph, ~6 GB at 10k (measured), >60 GB at 100k (est.)"
+    },
+    {
+      "lib": "mlx-stream",
+      "method": "tri_soft",
+      "N": 100000,
+      "fwd_ms": 253.24,
+      "fwd_mem_GB": 0.14,
+      "fwdbwd_ms": 9582.0,
+      "fwdbwd_mem_GB": 1.97,
+      "checksum_img": 24602.125,
+      "checksum_grad": {
+        "v": 0.10010085999965668,
+        "z": 0.1056717112660408,
+        "col": 0.009414163418114185
+      },
+      "peak_footprint_GB": 3.43
+    },
+    {
+      "lib": "torch",
+      "method": "tri_soft",
+      "N": 100000,
+      "fwd_ms": 4507.88,
+      "fwdbwd_ms": 16071.4,
+      "checksum_img": 24619.396484375,
+      "checksum_grad": {
+        "v": 0.10019978880882263,
+        "z": 0.10583776235580444,
+        "col": 0.009425877593457699
+      },
+      "peak_footprint_GB": 2.53
+    }
+  ]
+}

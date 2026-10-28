@@ -1,0 +1,15 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:23:10",
+  "fwd_max_abs_err": 0.0,
+  "bwd_max_abs_err": 2.384185791015625e-07,
+  "custom_fwd_ms": 1.063,
+  "torch_silu_fwd_ms": 1.029
+}

@@ -1,0 +1,169 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 17:05:54",
+  "rows": [
+    {
+      "lib": "mlx",
+      "method": "gauss_local",
+      "N": 1000,
+      "fwd_ms": 0.74,
+      "fwd_mem_GB": 0.01,
+      "fwdbwd_ms": 1.73,
+      "fwdbwd_mem_GB": 0.02,
+      "checksum_img": 24195.40625,
+      "checksum_grad": {
+        "mu": 0.014399709179997444,
+        "log_s": 0.047091491520404816,
+        "rot": 0.007866505533456802,
+        "col": 0.045516859740018845,
+        "op": 0.004427740350365639
+      },
+      "peak_footprint_GB": 0.07
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "gauss_local",
+      "N": 1000,
+      "fwd_ms": 0.52,
+      "fwd_mem_GB": 0.01,
+      "fwdbwd_ms": 1.39,
+      "fwdbwd_mem_GB": 0.02,
+      "checksum_img": 24195.40625,
+      "checksum_grad": {
+        "mu": 0.014399709179997444,
+        "log_s": 0.047091491520404816,
+        "rot": 0.007866505533456802,
+        "col": 0.045516859740018845,
+        "op": 0.004427740350365639
+      },
+      "peak_footprint_GB": 0.07
+    },
+    {
+      "lib": "torch",
+      "method": "gauss_local",
+      "N": 1000,
+      "fwd_ms": 1.87,
+      "fwdbwd_ms": 1.25,
+      "checksum_img": 24195.408203125,
+      "checksum_grad": {
+        "mu": 0.014399709179997444,
+        "log_s": 0.04709148406982422,
+        "rot": 0.007866505533456802,
+        "col": 0.045516859740018845,
+        "op": 0.004427740350365639
+      },
+      "peak_footprint_GB": 0.24
+    },
+    {
+      "lib": "mlx",
+      "method": "gauss_local",
+      "N": 10000,
+      "fwd_ms": 3.07,
+      "fwd_mem_GB": 0.06,
+      "fwdbwd_ms": 5.97,
+      "fwdbwd_mem_GB": 0.17,
+      "checksum_img": 24539.29296875,
+      "checksum_grad": {
+        "mu": 0.01456480473279953,
+        "log_s": 0.026147007942199707,
+        "rot": 0.00494977505877614,
+        "col": 0.025981754064559937,
+        "op": 0.005642575211822987
+      },
+      "peak_footprint_GB": 0.22
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "gauss_local",
+      "N": 10000,
+      "fwd_ms": 3.48,
+      "fwd_mem_GB": 0.04,
+      "fwdbwd_ms": 5.0,
+      "fwdbwd_mem_GB": 0.15,
+      "checksum_img": 24539.29296875,
+      "checksum_grad": {
+        "mu": 0.01456480473279953,
+        "log_s": 0.026147009804844856,
+        "rot": 0.00494977505877614,
+        "col": 0.025981754064559937,
+        "op": 0.005642575211822987
+      },
+      "peak_footprint_GB": 0.2
+    },
+    {
+      "lib": "torch",
+      "method": "gauss_local",
+      "N": 10000,
+      "fwd_ms": 3.63,
+      "fwdbwd_ms": 8.09,
+      "checksum_img": 24539.29296875,
+      "checksum_grad": {
+        "mu": 0.01456480473279953,
+        "log_s": 0.026147007942199707,
+        "rot": 0.004949774593114853,
+        "col": 0.025981750339269638,
+        "op": 0.005642575211822987
+      },
+      "peak_footprint_GB": 1.33
+    },
+    {
+      "lib": "mlx",
+      "method": "gauss_local",
+      "N": 100000,
+      "fwd_ms": 34.78,
+      "fwd_mem_GB": 0.6,
+      "fwdbwd_ms": 80.5,
+      "fwdbwd_mem_GB": 1.22,
+      "checksum_img": 24573.5390625,
+      "checksum_grad": {
+        "mu": 0.013492465950548649,
+        "log_s": 0.020273031666874886,
+        "rot": 0.0044801970943808556,
+        "col": 0.02158377692103386,
+        "op": 0.004889796953648329
+      },
+      "peak_footprint_GB": 1.45
+    },
+    {
+      "lib": "mlx-compile",
+      "method": "gauss_local",
+      "N": 100000,
+      "fwd_ms": 16.86,
+      "fwd_mem_GB": 0.43,
+      "fwdbwd_ms": 60.61,
+      "fwdbwd_mem_GB": 1.41,
+      "checksum_img": 24573.5390625,
+      "checksum_grad": {
+        "mu": 0.013492465950548649,
+        "log_s": 0.020273031666874886,
+        "rot": 0.0044801970943808556,
+        "col": 0.02158377692103386,
+        "op": 0.004889796953648329
+      },
+      "peak_footprint_GB": 1.51
+    },
+    {
+      "lib": "torch",
+      "method": "gauss_local",
+      "N": 100000,
+      "fwd_ms": 43.52,
+      "fwdbwd_ms": 79.94,
+      "checksum_img": 24573.5390625,
+      "checksum_grad": {
+        "mu": 0.013492465950548649,
+        "log_s": 0.020273031666874886,
+        "rot": 0.0044801970943808556,
+        "col": 0.02158377692103386,
+        "op": 0.004889797419309616
+      },
+      "peak_footprint_GB": 1.32
+    }
+  ]
+}

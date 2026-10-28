@@ -1,0 +1,74 @@
+{
+  "machine": {
+    "platform": "macOS-27.0-arm64-arm-64bit",
+    "python": "3.12.11",
+    "chip": "Apple M5",
+    "mem_bytes": 17179869184,
+    "mlx": "0.32.4",
+    "torch": "2.15.0"
+  },
+  "time": "2026-10-28 16:48:14",
+  "n": 2048,
+  "rows": [
+    {
+      "lib": "mlx",
+      "dtype": "fp32",
+      "max_rel_err": 0.0007828680562419803
+    },
+    {
+      "lib": "mlx",
+      "dtype": "fp16",
+      "max_rel_err": 0.00043292734578661874
+    },
+    {
+      "lib": "mlx",
+      "dtype": "bf16",
+      "max_rel_err": 0.003581295767090051
+    },
+    {
+      "lib": "mlx-cpu",
+      "dtype": "fp32",
+      "max_rel_err": 2.091528598693846e-06
+    },
+    {
+      "lib": "torch-mps(precision=highest)",
+      "dtype": "fp32",
+      "max_rel_err": 2.091528598693846e-06,
+      "TFLOPS": 3.1
+    },
+    {
+      "lib": "torch-mps(precision=high)",
+      "dtype": "fp32",
+      "max_rel_err": 2.091528598693846e-06,
+      "TFLOPS": 3.32
+    },
+    {
+      "lib": "torch-mps(precision=medium)",
+      "dtype": "fp32",
+      "max_rel_err": 2.091528598693846e-06,
+      "TFLOPS": 3.37
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "fp16",
+      "max_rel_err": 0.00043292734578661874
+    },
+    {
+      "lib": "torch-mps",
+      "dtype": "bf16",
+      "max_rel_err": 0.003581295767090051
+    },
+    {
+      "lib": "mlx(MLX_ENABLE_TF32=0)",
+      "dtype": "fp32",
+      "max_rel_err": 1.8367244267556648e-06,
+      "TFLOPS": 3.36
+    },
+    {
+      "lib": "mlx(MLX_ENABLE_TF32=1)",
+      "dtype": "fp32",
+      "max_rel_err": 0.0007891993651018819,
+      "TFLOPS": 8.53
+    }
+  ]
+}
