@@ -351,18 +351,28 @@ class CameraSolver:
             hip = sub.pts["hip"][fr]
             mid_p = hip[n // 2]
             d = sub.fwd[fr[n // 2]]
+            # a pan must stand far enough to the side to follow the car smoothly (turn rate at the
+            # closest point = speed / distance); a locked-off camera can stand anywhere
+            speed = float(np.linalg.norm(np.diff(hip[:, [0, 2]], axis=0), axis=1).mean() * self.fps) if n > 1 else 0.0
+            d_pan = max(7.0, 1.2 * speed / (np.radians(MAX_TURN_DEG * 0.85) * self.fps))
             best_r = None
-            for _ in range(24):
-                side_v = np.array([d[2], 0, -d[0]]) * rng.choice([-1, 1])
-                cam = mid_p + side_v * rng.uniform(7, 14) + np.array([d[0], 0, d[2]]) * rng.uniform(-5, 25)
-                cam[1] = float(self.world.ground_at(cam[0], cam[2])) + p.get("height", 1.5)
-                if self.world.inside(cam[None], margin=0.5)[0]:
-                    continue
-                vis = self._visibility(np.broadcast_to(cam, (len(sample), 3)).copy(), sub, sample, keys=("center", "top"))
-                if best_r is None or vis > best_r[0]:
-                    best_r = (vis, cam)
-                if vis > 0.95:
+            for d_min in ((d_pan, 7.0) if spec.move == "pan" else (7.0,)):
+                for _ in range(24):
+                    side_v = np.array([d[2], 0, -d[0]]) * rng.choice([-1, 1])
+                    cam = mid_p + side_v * rng.uniform(d_min, d_min * 1.6) + np.array([d[0], 0, d[2]]) * rng.uniform(-5, 25)
+                    cam[1] = float(self.world.ground_at(cam[0], cam[2])) + p.get("height", 1.5)
+                    if self.world.inside(cam[None], margin=0.5)[0]:
+                        continue
+                    vis = self._visibility(np.broadcast_to(cam, (len(sample), 3)).copy(), sub, sample,
+                                           keys=("center", "top"))
+                    if best_r is None or vis > best_r[0]:
+                        best_r = (vis, cam, d_min)
+                    if vis > 0.95:
+                        break
+                if best_r is not None and best_r[0] > 0.6:
                     break
+            if best_r is not None and spec.move == "pan" and best_r[2] < d_pan:
+                spec.move = "static"       # too close for a smooth pan: lock off and let the car pass
             if best_r is not None:
                 cam = best_r[1]
                 dist = np.linalg.norm(hip - cam, axis=1).min()
@@ -375,7 +385,7 @@ class CameraSolver:
                 # distance varies independently; the lens keeps the framing (clamped to real lenses)
                 k = np.exp(rng.uniform(np.log(0.8), np.log(1.25))) if attempt == 0 else \
                     np.exp(rng.uniform(np.log(0.35), np.log(1.8)))
-                dist = d_pref * k
+                dist = max(d_pref * k, p.get("min_dist", 0.0))
                 fov = float(np.degrees(2 * np.arctan(span / 2 / dist)))
                 if not 7.0 <= fov <= 78.0:
                     continue
@@ -402,7 +412,15 @@ class CameraSolver:
                 cam[1] = max(feet_y + h, float(self.world.ground_at(cam[0], cam[2])) + 0.35)
                 cands.append((cam, fov, yaw, h))
             scored = []
+            # a camera that stays put must be far enough from a moving subject's path that a smooth
+            # pan (turn rate = speed / distance) can follow it
+            hip_s = sub.pts["hip"][sample]
+            speed = float(np.linalg.norm(np.diff(sub.pts["hip"][fr][:, [0, 2]], axis=0), axis=1).max() * self.fps) \
+                if n > 1 else 0.0
+            d_pass = max(0.8, 1.15 * speed / (np.radians(MAX_TURN_DEG * 0.8) * self.fps))
             for cam, fov, yaw, h in cands:
+                if not moving_cam and attempt < 3 and np.linalg.norm((hip_s - cam)[:, [0, 2]], axis=1).min() < d_pass:
+                    continue
                 if moving_cam:
                     cams = aim_track + (cam - aim_track[0])
                     cams[:, 1] = cam[1] + (aim_track[:, 1] - aim_track[0, 1])
@@ -445,7 +463,12 @@ class CameraSolver:
         return self._apply_move(spec, sub, cam, fov, info_fallback)
 
     def _screen_x(self, sub, cam, fr, p):
-        """Horizontal placement: thirds with look room, or centred for direct address."""
+        """Horizontal placement: a third with look room, or centred for direct address.
+
+        The composition is chosen once per shot from where the subject faces on average (an
+        operator does not reframe on every glance), and it is a continuous function of that
+        facing, so the camera never snaps between thirds inside a shot.
+        """
         if p.get("center"):
             return np.zeros(len(fr))
         x = p.get("screen_x")
@@ -454,10 +477,10 @@ class CameraSolver:
         d = sub.pts["eye"][fr] - cam
         right = np.stack([-d[:, 2], np.zeros(len(fr)), d[:, 0]], 1)
         right /= np.maximum(np.linalg.norm(right, axis=1, keepdims=True), 1e-9)
-        look = (sub.fwd[fr] * right).sum(1)
-        look = gaussian_filter1d(look, 10, mode="nearest") if len(fr) > 3 else look
+        facing = sub.fwd[fr] * 0.4 + sub.body_fwd[fr] * 0.6
+        look = float((facing * right).sum(1).mean())
         k = p.get("thirds", 0.3)
-        return np.where(np.abs(look) > 0.25, -np.sign(look) * k, np.sign(look) * k * 0.3)
+        return np.full(len(fr), -k * float(np.clip(look / 0.35, -1.0, 1.0)))
 
     def _aim_track(self, spec, sub, cams, fov, lag=0.0):
         """Per-frame orientation keeping the subject framed (with optional operator lag)."""
@@ -482,6 +505,10 @@ class CameraSolver:
         else:
             x_n = self._screen_x(sub, cams.mean(0), fr, p)
         if lag > 0:
+            # operator lag in seconds of subject motion: fine for people, but a car at 27 m/s would be
+            # aimed metres behind itself, so fast subjects are followed nearly without lag
+            if sub.kind != "person":
+                lag = min(lag, 0.03)
             aim = _lag_filter(aim, lag * self.fps)
         aim = gaussian_filter1d(aim, 1.5, axis=0, mode="nearest") if n > 3 else aim
         q, pitch, yaw = aim_rotation(cams, aim, np.stack([x_n, y_n], 1), fov, self.aspect)
@@ -549,6 +576,10 @@ class CameraSolver:
             hd = sub.body_fwd[fr]
             yaw_s = np.unwrap(np.arctan2(hd[:, 0], hd[:, 2]))
             yaw_s = gaussian_filter1d(yaw_s, 20, mode="nearest")
+            lim = np.radians(MAX_TURN_DEG * 0.5)        # the operator walks around, never swings
+            for i in range(1, n):
+                yaw_s[i] = yaw_s[i - 1] + np.clip(yaw_s[i] - yaw_s[i - 1], -lim, lim)
+            yaw_s = gaussian_filter1d(yaw_s, 3, mode="nearest")
             rel = np.array([off[0], off[2]])
             yaw0 = yaw_s[0]
             c, s_ = np.cos(yaw_s - yaw0), np.sin(yaw_s - yaw0)
@@ -565,6 +596,7 @@ class CameraSolver:
                 # scripted pan settling on the subject
                 q_end, _, yaw_end = self._aim_track(spec, sub, cams, fovs)
                 swing = np.radians(p.get("pan", rng.choice([-1, 1]) * rng.uniform(12, 30)))
+                swing = np.sign(swing) * min(abs(swing), np.radians(MAX_TURN_DEG * 0.6) * 0.8 * n / 1.875)
                 q, pitch, yaw = self._aim_track(spec, sub, cams, fovs)
                 yaw = yaw + swing * (1 - minjerk(t / max(t[-1] * 0.8, 1e-3)))
                 q = quat_euler(pitch, yaw, np.zeros(n))
@@ -574,11 +606,12 @@ class CameraSolver:
             tilt = np.radians(p.get("tilt", rng.uniform(10, 25))) * (1 - minjerk(t / max(t[-1] * 0.85, 1e-3)))
             q = quat_euler(pitch - tilt, yaw, np.zeros(n))
             return self._finish(spec, cams, q, fovs, hh, fallback)
-        if move != "static" or sub.kind != "person" or np.ptp(sub.pts["hip"][fr][:, [0, 2]], axis=0).max() > 0.25:
+        if move != "static":
             q, _, _ = self._aim_track(spec, sub, cams, fovs, lag)
         else:
+            # a locked-off tripod: one orientation for the whole shot, aimed at the average framing;
+            # a moving subject travels through the frame
             q, _, _ = self._aim_track(spec, sub, cams, fovs)
-            # a locked-off tripod does not follow small sways: aim at the average framing
             q = np.broadcast_to(_mean_quat(q), q.shape).copy()
         return self._finish(spec, cams, q, fovs, hh, fallback, p.get("walk_hz") if move == "follow" else None)
 
@@ -603,7 +636,7 @@ class CameraSolver:
                         break
             cams = gaussian_filter1d(cams, 2, axis=0, mode="nearest")
             info["pulled"] = int(bad.sum())
-        return cams.astype(np.float32), quat_continuous(q).astype(np.float32), np.asarray(fovs, np.float32), info
+        return _finalize(cams, q, fovs, info)
 
     # ------------------------------------------------------------ special moves
     def _establishing(self, spec):
@@ -659,7 +692,7 @@ class CameraSolver:
             vib = colored_noise(n, self.fps, rng, 2.0, 12.0, 0.5) * np.radians(0.08)
             q = quat_euler(pitch + vib[:, 0], yaw + vib[:, 1] * 0.5, roll + vib[:, 2])
             fov = np.full(n, p.get("fov", 52.0))
-            return cams.astype(np.float32), quat_continuous(q).astype(np.float32), fov.astype(np.float32), {"attached": True}
+            return _finalize(cams, q, fov, {"attached": True})
         jw = host["joints_world"][fr].astype(np.float64)
         jr = host["joint_rot_world"][fr].astype(np.float64)
         s = p.get("scale", 1.0)
@@ -681,11 +714,18 @@ class CameraSolver:
             look[m] = [rng.normal(0, amp), rng.normal(-0.05, 0.14 if game else 0.1)]
             tt += dur
         # game mouse-look: quick flicks (short smoothing); POV heads: slower
-        look = gaussian_filter1d(look, (0.08 if game else 0.25) * self.fps, axis=0, mode="nearest")
+        look = gaussian_filter1d(look, (0.18 if game else 0.25) * self.fps, axis=0, mode="nearest")
         yaw_c = yaw + look[:, 0] + np.pi
         pitch_c = np.clip(look[:, 1], -0.6, 0.5)
         if not game:
             pitch_c = pitch_c - 0.12
+        # a head (or a player's mouse) turns fast but not instantly: rate-limit both axes, then ease
+        lim = np.radians(MAX_TURN_DEG * 0.7)
+        for arr in (yaw_c, pitch_c):
+            for i in range(1, n):
+                arr[i] = arr[i - 1] + np.clip(arr[i] - arr[i - 1], -lim, lim)
+        yaw_c = gaussian_filter1d(yaw_c, 2.0, mode="nearest")
+        pitch_c = gaussian_filter1d(pitch_c, 2.0, mode="nearest")
         roll = np.zeros(n)
         if game:
             # head bob from the avatar's steps, but no roll (game cameras stay level)
@@ -696,7 +736,7 @@ class CameraSolver:
             pitch_c, yaw_c, roll = pitch_c + rot[:, 0], yaw_c + rot[:, 1], rot[:, 2]
         q = quat_euler(pitch_c, yaw_c, roll)
         fov = np.full(n, p.get("fov", 62.0))
-        return cams.astype(np.float32), quat_continuous(q).astype(np.float32), fov.astype(np.float32), {"attached": True}
+        return _finalize(cams, q, fov, {"attached": True})
 
     def _drone(self, spec):
         """Drone: high, slow and smooth; follows or reveals the subject; orbit or fly-by."""
@@ -736,9 +776,15 @@ class CameraSolver:
         cams = target + off
         if style == "flyby":
             side = np.array([np.cos(base_yaw), 0, -np.sin(base_yaw)])
-            cams = cams + side * (rng.uniform(4, 8) * (t - t[-1] / 2))[:, None]
+            cams = cams + side * (rng.uniform(2, 4) * (t - t[-1] / 2))[:, None]
         if style == "reveal":
             cams = cams + (target - cams) * (0.35 * minjerk(t / max(t[-1], 1e-6)))[:, None] * [1, 0, 1]
+        # keep a horizontal standoff: looking almost straight down makes the heading unstable
+        hz = (cams - target)[:, [0, 2]]
+        hd_ = np.linalg.norm(hz, axis=1, keepdims=True)
+        stand = max(6.0, 0.8 * alt)
+        away = np.where(hd_ > 1e-3, hz / np.maximum(hd_, 1e-3), np.array([[np.sin(base_yaw), np.cos(base_yaw)]]))
+        cams[:, [0, 2]] = target[:, [0, 2]] + away * np.sqrt(hd_ ** 2 + stand ** 2)      # smooth, no kink
         gy = self.world.ground_at(cams[:, 0], cams[:, 2])
         rise = alt + (rng.uniform(-4, 6) * minjerk(t / max(t[-1], 1e-6)) if style == "reveal" else 0)
         cams[:, 1] = np.maximum(gaussian_filter1d(gy, 15, mode="nearest") + 4, target[:, 1] + rise)
@@ -749,6 +795,60 @@ class CameraSolver:
         bank = np.clip(gaussian_filter1d(np.gradient(np.unwrap(yaw)) * self.fps, 10, mode="nearest") * -0.15, -0.15, 0.15)
         q = quat_euler(pitch, yaw, bank)
         return self._finish(spec, cams, q, fov, False, False)
+
+
+MAX_TURN_DEG = 1.9     # per-frame rotation limit of every camera inside a shot (a real head / operator)
+
+
+def limit_turn_rate(q, max_deg=MAX_TURN_DEG):
+    """Follow an orientation track but turn at most `max_deg` per frame (slerp toward the target).
+
+    Deliberately fast targets (a car passing close to a roadside camera, a game flick) make the
+    camera lag and catch up instead of snapping, so a turn inside a shot never looks like a cut.
+    """
+    q = quat_continuous(np.asarray(q, float))
+    out = q.copy()
+    lim = np.radians(max_deg)
+    for i in range(1, len(q)):
+        prev, tgt = out[i - 1], q[i]
+        d = float(np.dot(prev, tgt))
+        if d < 0:
+            tgt, d = -tgt, -d
+        ang = 2 * np.arccos(min(1.0, d))
+        if ang > lim:
+            w = lim / ang
+            th = ang / 2
+            r = (np.sin((1 - w) * th) * prev + np.sin(w * th) * tgt) / np.sin(th)
+            out[i] = r / np.linalg.norm(r)
+        else:
+            out[i] = tgt
+    return out
+
+
+def _finalize(cams, q, fovs, info):
+    """Common exit of every camera solver: finite values, sign-continuous and turn-rate-limited rotations."""
+    cams = np.asarray(cams, np.float64)
+    q = np.asarray(q, np.float64)
+    fovs = np.broadcast_to(np.asarray(fovs, np.float64), (len(cams),)).copy()
+    if not (np.isfinite(cams).all() and np.isfinite(q).all() and np.isfinite(fovs).all()) or \
+            np.abs(cams).max() > 1e5:
+        raise FloatingPointError("camera solver produced non-finite or diverging values")
+    q = quat_continuous(q / np.linalg.norm(q, axis=1, keepdims=True))
+    raw = turn_degrees(q)
+    info["max_turn_raw"] = float(raw.max()) if len(raw) else 0.0    # before limiting: tests catch snaps here
+    if len(q) > 2 and raw.max() > MAX_TURN_DEG:
+        # limit, smooth the resulting rate changes, limit again (the second pass rarely engages)
+        q = limit_turn_rate(q)
+        q = quat_continuous(gaussian_filter1d(q, 1.5, axis=0, mode="nearest"))
+        q = limit_turn_rate(q / np.linalg.norm(q, axis=1, keepdims=True))
+        info["turn_limited"] = int((raw > MAX_TURN_DEG).sum())
+    return cams.astype(np.float32), q.astype(np.float32), fovs.astype(np.float32), info
+
+
+def turn_degrees(q):
+    """Rotation angle between consecutive orientations of a track, in degrees."""
+    q = np.asarray(q, np.float64)
+    return np.degrees(2 * np.arccos(np.clip(np.abs((q[1:] * q[:-1]).sum(1)), 0, 1)))
 
 
 def _cross2(a, b):

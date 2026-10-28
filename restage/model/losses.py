@@ -17,11 +17,12 @@ from restage import scene as S
 OFF0 = mx.array(S.OFFSETS[0])                 # rest offset of the pelvis from the entity root
 
 WEIGHTS = {
-    "cam_rot": 2.0, "cam_pos": 1.0, "cam_fov": 1.0,
+    "cam_rot": 2.0, "cam_pos": 10.0, "cam_fov": 1.0,
     "loc_pair": 1.0, "loc_exist": 0.3, "loc_color": 0.5,
-    "ent_class": 1.0, "ent_present": 1.0, "ent_visible": 1.0, "ent_pos": 1.0, "ent_rot": 1.0, "ent_joint": 1.0,
+    "ent_class": 1.0, "ent_present": 1.0, "ent_visible": 1.0, "ent_pos": 10.0, "ent_rot": 1.0, "ent_joint": 1.0,
     "ent_shape": 0.5, "ent_color": 0.5, "ent_loc": 0.3,
-    "set_chamfer": 1.0, "set_rate": 0.02,
+    "set_chamfer": 5.0, "set_rate": 0.02,
+    "render_alpha": 0.5, "render_depth": 1.0, "render_inst": 1.0,
 }
 
 
@@ -82,8 +83,24 @@ def prepare_targets(batch: dict) -> dict:
                 continue
             d = np.linalg.norm(pts[b, l][:, None, :] - cams[None], axis=-1).min(1)
             w[b, l] *= (d < 20.0)
+    # spatial scale of each location in the window (metres): positional errors are measured relative to it, so
+    # a 1.8 km highway and a 4 m kitchen weigh the same and re-anchoring doesn't turn rotation error into huge losses
+    scale = np.full((B, L), 2.0, np.float32)
+    for b in range(B):
+        for l in range(L):
+            sel = (key_loc[b] == l) & batch["key_mask"][b]
+            if not sel.any():
+                continue
+            pts_l = [batch["cam_pos"][b][sel][:, [0, 2]]]
+            ents = np.nonzero(batch["ent_mask"][b] & (batch["ent_loc"][b] == l))[0]
+            for e in ents:
+                pr = batch["ent_present"][b, e].astype(bool) & sel
+                if pr.any():
+                    pts_l.append(pos[b, e][pr][:, [0, 2]])
+            r = np.linalg.norm(np.concatenate(pts_l), axis=-1)
+            scale[b, l] = np.clip(np.percentile(r, 90), 2.0, 300.0)
     return {"key_loc": key_loc.astype(np.int32), "anchor": anchor, "root_rot": S.quat_to_mat(root_new).astype(np.float32),
-            "root_pos": pos.astype(np.float32), "joints": joints, "pt_w": w}
+            "root_pos": pos.astype(np.float32), "joints": joints, "pt_w": w, "loc_scale": scale}
 
 
 # ---------------------------------------------------------------- prediction re-anchoring (MLX)
@@ -138,7 +155,7 @@ def match(out, batch, tgt, G, t):
             # predicted positions re-anchored with the GT entity's location gauge
             pp = (pos[b] + tn[b, lg]) @ Gn[b, lg].T                                         # [E,K,3]
             d = np.linalg.norm(pp - tgt["root_pos"][b, g][None], axis=-1)                   # [E,K]
-            dpos = (d * pres).sum(-1) / (pres.sum() + 1e-6)
+            dpos = (d * pres).sum(-1) / (pres.sum() + 1e-6) / tgt["loc_scale"][b, lg] * 4.0
             inter = (vis_p[b] * pres).sum(-1)
             union = (vis_p[b] + pres - vis_p[b] * pres).sum(-1) * 1.0 + 1e-6
             cost[:, j] = (-np.log(cls_p[b, :, cg] + 1e-6) + 2.0 * (1 - inter / union)
@@ -187,7 +204,7 @@ def box_points(center, size, yaw, roundness):
 
 # ---------------------------------------------------------------- the loss
 
-def compute_losses(out, batch: dict, bm: dict, tgt: dict):
+def compute_losses(out, batch: dict, bm: dict, tgt: dict, render: bool = False, rng=None):
     """out: model outputs; batch: numpy batch; bm: the same batch as MLX arrays; tgt: prepare_targets(batch)."""
     B, K = batch["key_mask"].shape
     E = out["ent_class"].shape[1]
@@ -203,7 +220,9 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict):
     gR, gp = bm["cam_rot"], bm["cam_pos"]
     rot_err = geom.geodesic(Rg, gR)
     L["cam_rot"] = _masked_mean(rot_err, key_mask)
-    L["cam_pos"] = _masked_mean(_smooth_l1(pg - gp).sum(-1), key_mask)
+    scale = mx.array(tgt["loc_scale"])
+    sk = _take(scale, key_loc, 1)[..., None]
+    L["cam_pos"] = _masked_mean(_smooth_l1((pg - gp) / sk, 0.05).sum(-1), key_mask)
     L["cam_fov"] = _masked_mean(mx.abs(mx.log(out["cam_fov"]) - mx.log(bm["cam_fov"])), key_mask)
 
     # ---- locations: same-place pairs over shots
@@ -235,9 +254,9 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict):
     gpts = _take(bm["loc_points"], lg, 1)                                             # [B,Lp,N,3]
     gw = _take(mx.array(tgt["pt_w"]), lg, 1) * lvalid[..., None]
     d2 = ((pts[:, :, :, None, :] - gpts[:, :, None, :, :]) ** 2).sum(-1)              # [B,Lp,NBM,N]
-    d = mx.sqrt(d2 + 1e-6)
+    d = mx.sqrt(d2 + 1e-6) / _take(scale, lg, 1)[..., None, None]
     p2g = (w * d.min(-1)).sum(-1) / (w.sum(-1) + 1e-6)
-    g2p = (gw * (d + 3.0 * (1 - w)[..., None]).min(-2)).sum(-1) / (gw.sum(-1) + 1e-6)
+    g2p = (gw * (d + 0.5 * (1 - w)[..., None]).min(-2)).sum(-1) / (gw.sum(-1) + 1e-6)
     has = (gw.sum(-1) > 0)
     L["set_chamfer"] = _masked_mean(p2g + g2p, has)
     L["set_rate"] = _masked_mean(mx.sigmoid(out["box_logit"]).mean(-1), lvalid)
@@ -262,7 +281,8 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict):
     ppos = ((out["ent_pos"] + te[:, :, None, :])[..., None, :] @ Ge[:, :, None].swapaxes(-1, -2))[..., 0, :]
     gpos = _take(mx.array(tgt["root_pos"]), gi, 1)
     pm = (pres_t > 0) & kmE
-    L["ent_pos"] = _masked_mean(_smooth_l1(ppos - gpos).sum(-1), pm)
+    se = _take(scale, mx.array(eloc), 1)[..., None, None]
+    L["ent_pos"] = _masked_mean(_smooth_l1((ppos - gpos) / se, 0.05).sum(-1), pm)
     pR = Ge[:, :, None] @ geom.rot6d_to_mat(out["ent_rot6d"])
     gRr = _take(mx.array(tgt["root_rot"]), gi, 1)
     L["ent_rot"] = _masked_mean(geom.geodesic(pR, gRr), pm)
@@ -286,6 +306,23 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict):
     lpe = out["ent_loc"] - mx.logsumexp(out["ent_loc"], -1, keepdims=True)
     L["ent_loc"] = _masked_mean(-mx.take_along_axis(lpe, mx.array(loc_slot_t)[..., None], -1)[..., 0], mm)
 
+    extra = {}
+    if render:
+        from restage.model.render_loss import render_loss
+        slot_loc = np.where(matched, eloc, -1)
+        slot_of_gt = np.full((B, batch["ent_mask"].shape[1]), -1, np.int32)
+        for b_, ps in enumerate(ent_pairs):
+            for e_, g_ in ps:
+                slot_of_gt[b_, g_] = e_
+        has_slot = np.zeros((B, batch["loc_mask"].shape[1]), np.float32)
+        for b_, ps in enumerate(loc_pairs):
+            for s_, l_ in ps:
+                has_slot[b_, l_] = 1.0
+        ctx = {"Rg": Rg, "pg": pg, "key_loc": tgt["key_loc"], "gt2slot": gt2slot, "loc_has_slot": has_slot,
+               "box_center_g": centers, "box_yaw_g": out["box_yaw"] - psi[..., None], "ent_pos_g": ppos, "ent_rot_g": pR,
+               "slot_loc": slot_loc, "slot_of_gt": slot_of_gt}
+        rl, extra = render_loss(out, batch, tgt, ctx, rng=rng)
+        L.update(rl)
     total = sum(WEIGHTS[k] * v for k, v in L.items())
     # metrics (not part of the loss)
     anchor_mask = bm["is_anchor"] & key_mask
@@ -295,5 +332,6 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict):
         "pos_m_crosscut": _masked_mean(mx.linalg.norm(pg - gp, axis=-1), key_mask & ~anchor_mask),
         "ent_pos_m": _masked_mean(mx.linalg.norm(ppos - gpos, axis=-1), pm),
         "matched": mx.array(float(matched.sum())),
+        **{k: mx.array(v) for k, v in extra.items()},
     }
     return total, L, metrics, (ent_pairs, loc_pairs)

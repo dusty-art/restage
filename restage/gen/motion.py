@@ -511,6 +511,11 @@ class HumanoidAnimator:
         s_t = s_of(t)
         xz = path.pos(s_t)
         yaw = path.heading(s_t)
+        # blend from the previous facing into the path heading over the first step (no snap when a
+        # new walk starts a little off the current facing)
+        yaw0 = self.yaw + wrap(yaw[0] - self.yaw) if len(yaw) else self.yaw
+        yaw = yaw - yaw[0] + yaw0 if len(yaw) else yaw
+        yaw = yaw + (self.yaw - yaw0) * (1 - smoothstep((t - t0) / 0.6))
         v_t = v_of(t)
         lt = np.array([l[0] for l in landings])
         lv = np.array([n + (0 if first == 0 else 1) for n in range(len(landings))], float)

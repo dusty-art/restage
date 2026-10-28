@@ -425,8 +425,9 @@ def scene_talking(rng, T, fps):
         if ent.loc != ls.id:
             shots += C.plan_broll(e0, e1, fps, rng, eid, ent.loc)
         else:
+            # a ball flies fast: film it from across the room so the pan can follow without whipping
             shots.append(C.ShotSpec(e0, e1, ls.id, "extreme_wide", "pan", eid, params={"spread": 40, "azimuth": 0.0,
-                                                                                       "height": 1.5}))
+                                                                                       "height": 1.5, "min_dist": 3.5}))
         f = e1
     if T - f > 0:
         shots += C.plan_talking(f, T, fps, rng, host.eid, a_cam, [o.eid for o in objs if o.cls == "object"], ls.id)
@@ -914,7 +915,8 @@ def assemble(state, seed, errors=False, video_name=None, width=640, height=360):
         sid, cid = f"s{i}", f"cam{i}"
         db.cameras.append({"id": cid, "shot": sid, "track": {"position": p, "rotation": q, "fov": f}})
         sh = {"id": sid, "start": int(s.start), "end": int(s.end), "location": str(s.loc), "camera": cid,
-              "size": str(s.size), "move": str(_move_name(s)), "transition": str(s.transition)}
+              "size": str(s.size), "move": str(_move_name(s, p, cast.subjects(s.loc).get(s.subject))),
+              "transition": str(s.transition)}
         if s.subject:
             sh["subject"] = str(s.subject)
         if s.params.get("host"):
@@ -929,10 +931,19 @@ def assemble(state, seed, errors=False, video_name=None, width=640, height=360):
     return db.doc()
 
 
-def _move_name(s):
+def _move_name(s, cam_pos=None, subject=None):
+    """Format move label. A follow shot is handheld if hand-held, else a dolly when the camera rides
+    behind / ahead of the subject and a truck when it rides beside it."""
     m = s.move
     if m == "follow":
-        return "handheld" if s.params.get("handheld") else "truck"
+        if s.params.get("handheld"):
+            return "handheld"
+        if cam_pos is not None and subject is not None:
+            off = (np.asarray(cam_pos, float) - subject.pts["hip"][s.world])[:, [0, 2]].mean(0)
+            hd = subject.body_fwd[s.world][:, [0, 2]].mean(0)
+            c = abs(np.dot(off, hd)) / max(np.linalg.norm(off) * np.linalg.norm(hd), 1e-9)
+            return "dolly" if c > 0.7 else "truck"
+        return "truck"
     return m
 
 

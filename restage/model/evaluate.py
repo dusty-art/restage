@@ -160,8 +160,7 @@ def run(model, feats_fn, batch, per_shot=False):
     base["cam_pos"] = p_all
     base["cam_fov"] = fov_all
     S_ = batch["shot_mask"].shape[1]
-    base["shot_assign"] = mx.broadcast_to(mx.eye(S_, base["shot_assign"].shape[2] if S_ <= base["shot_assign"].shape[2] else S_)[None, :S_],
-                                          (B, S_, base["shot_assign"].shape[2]))
+    base["shot_assign"] = mx.broadcast_to(mx.eye(S_)[None], (B, S_, S_))      # every shot its own place
     tgt = prepare_targets(batch)
     return base, tgt, None
 
@@ -181,17 +180,20 @@ def main():
     loader = Loader(Path(a.data) / a.split, batch_size=2, augment=False, seed=0, epoch=True, workers=2)
     acc: dict[str, list[float]] = {}
     n = 0
-    for batch in loader:
-        out, tgt, pairs = run(model, feats_fn, batch, per_shot=a.baseline == "per_shot")
-        bmask = batch.get("batch_mask", np.ones(batch["key_mask"].shape[0], bool))
-        for b in range(batch["key_mask"].shape[0]):
-            if not bmask[b]:
-                continue
-            for k, v in window_metrics(out, batch, tgt, b, pairs).items():
-                acc.setdefault(k, []).append(v)
-        n += 1
-        if n >= a.max_batches:
-            break
+    try:
+        for batch in loader:
+            out, tgt, pairs = run(model, feats_fn, batch, per_shot=a.baseline == "per_shot")
+            bmask = batch.get("batch_mask", np.ones(batch["key_mask"].shape[0], bool))
+            for b in range(batch["key_mask"].shape[0]):
+                if not bmask[b]:
+                    continue
+                for k, v in window_metrics(out, batch, tgt, b, pairs).items():
+                    acc.setdefault(k, []).append(v)
+            n += 1
+            if n >= a.max_batches:
+                break
+    finally:
+        loader.close()          # stop the worker processes even after an error
     res = {k: round(float(np.mean(v)), 4) for k, v in sorted(acc.items())}
     res["windows"] = len(acc.get("cam_fov_deg", []))
     res["checkpoint"] = a.checkpoint

@@ -234,6 +234,94 @@ def test_state_matches_rendered_visibility(genre, generated):
     assert agree / max(total, 1) > 0.88
 
 
+MANY_SEEDS = range(900, 910)
+
+
+@pytest.fixture(scope="module")
+def many():
+    """Several short scenes per genre (some with continuity errors) for property tests."""
+    import warnings
+    out = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)       # overflow / invalid values fail loudly
+        for g in scenario.GENRES:
+            for seed in MANY_SEEDS:
+                doc, state = scenario.generate(g, seed=seed, seconds=6.0, errors=(seed % 2 == 0))
+                out.append((g, seed, doc, state))
+    return out
+
+
+def _turn_deg(q):
+    q = np.asarray(q, np.float64)
+    return np.degrees(2 * np.arccos(np.clip(np.abs((q[1:] * q[:-1]).sum(1)), 0, 1)))
+
+
+def test_all_tracks_finite(many):
+    for g, seed, doc, _ in many:
+        for c in doc["cameras"]:
+            for k, v in c["track"].items():
+                assert np.isfinite(v).all(), f"{g} seed {seed} {c['id']}.{k} not finite"
+            assert np.abs(c["track"]["position"]).max() < 1e4, f"{g} seed {seed} {c['id']} far away"
+            assert np.all((c["track"]["fov"] > 1) & (c["track"]["fov"] < 120))
+        for e in doc["entities"]:
+            for k, v in e["track"].items():
+                assert np.isfinite(np.asarray(v, np.float64)).all(), f"{g} seed {seed} {e['id']}.{k} not finite"
+
+
+def test_cameras_smooth_within_shots(many):
+    """No camera turns more than 2 degrees or jumps in position between two frames of a shot."""
+    from scipy.ndimage import median_filter
+    for g, seed, doc, _ in many:
+        for sh, c in zip(doc["shots"], doc["cameras"]):
+            tr = c["track"]
+            if len(tr["rotation"]) < 3:
+                continue
+            turn = _turn_deg(tr["rotation"])
+            assert turn.max() <= 2.0, f"{g} seed {seed} {sh['id']} ({sh['move']}) turns {turn.max():.1f} deg " \
+                                      f"at frame {sh['start'] + int(turn.argmax()) + 1}"
+            step = np.linalg.norm(np.diff(tr["position"].astype(np.float64), axis=0), axis=1)
+            local = median_filter(step, 9, mode="nearest")
+            jump = (step > 0.3) & (step > 5 * local)
+            assert not jump.any(), f"{g} seed {seed} {sh['id']} ({sh['move']}) position jump " \
+                                   f"{step[jump].max():.2f} m at frame {sh['start'] + int(np.argmax(jump)) + 1}"
+            assert np.abs(np.diff(tr["fov"])).max() < 1.0, f"{g} seed {seed} {sh['id']} fov jump"
+
+
+def test_camera_solver_needs_no_whips(many):
+    """Before the safety turn-rate limiter, cameras framing people or vehicles turn at most 2.5 deg/frame.
+
+    The limiter would turn a framing snap into a fast swing, so this checks the solver itself: a
+    reframing step (the old thirds switch made 8-22 deg jumps) fails here even though the output
+    track would be rate-limited. Thrown balls are the one deliberately fast subject and are exempt.
+    """
+    for g, seed, doc, state in many:
+        ents = {e.eid: e for e in state["cast"].ents}
+        for sh, spec, (_, _, _, info) in zip(doc["shots"], state["shots"], state["cams"]):
+            subj = ents.get(spec.subject)
+            if subj is not None and subj.cls == "object":
+                continue
+            assert info["max_turn_raw"] <= 2.5, f"{g} seed {seed} {sh['id']} ({sh['move']}) needs " \
+                                                f"{info['max_turn_raw']:.1f} deg/frame"
+
+
+# exact reproductions reported by the data pipeline (restage/data/GEN_REQUESTS.md)
+REPORTED = [("interview", 1000001, 15.93, True), ("hiking", 2000003, 15.34, True), ("dance", 5, 12.0, False),
+            ("driving", 5, 12.0, False), ("driving", 3, 12.0, False)]
+
+
+@pytest.mark.parametrize("genre,seed,seconds,errors", REPORTED)
+def test_reported_cases_smooth_and_finite(genre, seed, seconds, errors):
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        doc, _ = scenario.generate(genre, seed=seed, seconds=seconds, errors=errors)
+    for sh, c in zip(doc["shots"], doc["cameras"]):
+        tr = c["track"]
+        assert all(np.isfinite(v).all() for v in tr.values()), f"{sh['id']} not finite"
+        if len(tr["rotation"]) > 1:
+            assert _turn_deg(tr["rotation"]).max() <= 2.0, f"{sh['id']} ({sh['move']}) turns too fast"
+
+
 def test_determinism():
     a, _ = scenario.generate("interview", seed=7, seconds=4.0)
     b, _ = scenario.generate("interview", seed=7, seconds=4.0)

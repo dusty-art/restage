@@ -151,6 +151,15 @@ is randomised per location kind and time of day.
   - driving: dashcam, chase, roadside, drone, with section skips;
   - voxel: first and third person, with area changes.
 - **Shot lengths**: log-normal, about 1.5–6 s.
+- **Smooth within shots**: a turn inside a shot must never look like a cut, so camera tracks are
+  smooth by construction:
+  - each shot's composition (which third the subject sits on) is chosen once;
+  - static shots are locked off;
+  - follow, pan and drone paths keep a distance from the subject that a smooth turn can track;
+  - first-person heads and mouse-look turn at a bounded rate.
+  As a final safety net, every track is limited to 1.9° of rotation per frame. Before that
+  limiter, solvers framing people or vehicles need at most about 2° per frame; the thrown ball is
+  the one exception that relies on the limiter. No shot is a whip pan, so none needs flagging.
 
 ### Scenarios
 
@@ -220,7 +229,7 @@ Visibility against the rendered id buffers, measured over 6–8 seeds per genre:
 .venv/bin/python -m pytest tests/test_gen.py
 ```
 
-The suite has 29 tests and runs in about 5 s. It covers:
+The suite has 37 tests and runs in about 45 s. It covers:
 
 - the format round trip and the document contract (accessor alignment, shot tiling, track
   shapes, unit quaternions);
@@ -228,6 +237,11 @@ The suite has 29 tests and runs in about 5 s. It covers:
   ground and does not slide;
 - stride growing with speed;
 - cameras never inside geometry, for every genre;
+- all camera and entity tracks finite (10 seeds per genre, numpy warnings as errors);
+- camera tracks smooth within shots: at most 2° of rotation per frame, no position or fov jumps;
+- the solver needing no whips before the rate limiter, which catches framing snaps the limiter
+  would hide;
+- the data pipeline's reproductions from `restage/data/GEN_REQUESTS.md`;
 - `state` matching the rendered instance ids, for every genre;
 - determinism;
 - recorded continuity errors;
