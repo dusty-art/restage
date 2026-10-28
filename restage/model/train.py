@@ -18,7 +18,7 @@ import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as optim
 import numpy as np
-from mlx.utils import tree_flatten, tree_unflatten
+from mlx.utils import tree_flatten, tree_map, tree_unflatten
 
 from restage.model.losses import WEIGHTS, compute_losses, prepare_targets
 from restage.model.net import Config, Restage, count_params
@@ -138,6 +138,7 @@ def main():
     ap.add_argument("--fake", action="store_true", help="random batches that follow the data contract (smoke test)")
     ap.add_argument("--mem-gb", type=float, default=10.0)
     ap.add_argument("--render-from", type=int, default=-1, help="step at which the re-render loss switches on (-1 = never)")
+    ap.add_argument("--accum", type=int, default=1, help="micro-batches averaged per optimiser step")
     args = ap.parse_args()
     mx.set_memory_limit(int(args.mem_gb * (1 << 30)))
     out_dir = Path(args.out)
@@ -166,12 +167,22 @@ def main():
     t0 = time.time()
     for it in range(start, args.steps):
         opt.learning_rate = lr_at(it, args.lr, args.warmup, args.steps)
-        batch = next(train_it)
         render = args.render_from >= 0 and it >= args.render_from
-        loss, parts, metrics, grads = step_fn(batch, render=render)
-        if not all(np.isfinite(float(v)) for v in [loss]):
-            print(f"step {it}: non-finite loss, batch skipped", flush=True)
+        grads = None
+        n_ok = 0
+        for _ in range(args.accum):
+            batch = next(train_it)
+            loss, parts, metrics, g = step_fn(batch, render=render)
+            mx.eval(loss, g)
+            if not np.isfinite(float(loss)):
+                print(f"step {it}: non-finite loss, micro-batch skipped", flush=True)
+                continue
+            grads = g if grads is None else tree_map(lambda a, b: a + b, grads, g)
+            n_ok += 1
+        if grads is None:
             continue
+        if n_ok > 1:
+            grads = tree_map(lambda a: a / n_ok, grads)
         grads, gnorm = optim.clip_grad_norm(grads, args.clip)
         opt.update(model, grads)
         mx.eval(model.parameters(), opt.state, loss, parts, metrics)
