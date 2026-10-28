@@ -133,13 +133,15 @@ def decode(out: dict, clip: dict, fps: int, n_frames: int, title: str = "Restage
         cam_here = cam_p[key_loc == li]
         lo = np.minimum(cam_here.min(0), centers[present].min(0) if present.any() else cam_here.min(0)) - 4
         hi = np.maximum(cam_here.max(0), centers[present].max(0) if present.any() else cam_here.max(0)) + 4
-        for bi in np.nonzero(present)[0]:
-            mid = f"loc{li}_box{bi}"
-            meshes.append({"id": mid, **rounded_box_mesh(o["box_size"][slot, bi], o["box_round"][slot, bi],
-                                                          o["box_color"][slot, bi])})
-            yaw = o["box_yaw"][slot, bi] - psi
-            props.append({"id": f"box{bi}", "class": "block", "mesh": mid, "position": centers[bi].tolist(),
-                          "rotation": S.quat_euler(y=yaw).tolist()})
+        if present.any():
+            import mlx.core as mx
+            from restage.render import export as RX, shapes as RS
+            yaw = o["box_yaw"][slot] - psi
+            bv, bf, bmeta = RS.rounded_boxes(mx.array(centers[None].astype(np.float32)), mx.array(o["box_size"][slot][None].astype(np.float32)),
+                                             mx.array(yaw[None].astype(np.float32)), mx.array(o["box_round"][slot][None].astype(np.float32)))
+            mid = f"loc{li}_boxes"
+            meshes.append({**RX.rounded_boxes_to_numpy(np.array(bv[0]), bf, bmeta, o["box_color"][slot], present, mid), "id": mid})
+            props.append({"id": "blocks", "class": "blocks", "mesh": mid})
         gid = f"loc{li}_ground"
         w = float(max(hi[0] - lo[0], hi[2] - lo[2], 8.0)) * 1.5
         gm = rounded_box_mesh((w, 0.02, w), 0.0, o["loc_ground"][slot], n=1)
@@ -167,7 +169,6 @@ def decode(out: dict, clip: dict, fps: int, n_frames: int, title: str = "Restage
                       "size": "medium", "move": "static", "transition": "cut"})
 
     # ---------------------------------------------------------- entities
-    from restage.gen import assets as A
     skeletons = {}
     cls = o["ent_class"].argmax(-1)
     pres = _sigmoid(o["ent_present"][:, :K])
@@ -207,14 +208,11 @@ def decode(out: dict, clip: dict, fps: int, n_frames: int, title: str = "Restage
         mid = f"ent{ei}_mesh"
         if c == 1:
             h = float(np.clip(o["ent_height"][ei], 1.2, 2.1))
-            params = {"style": "realistic", "height": h, "build": 1.0, "feminine": False, "skin": cols[0],
-                      "hair_color": cols[4], "hair": "short", "beard": False, "top_color": cols[1], "top": "tshirt",
-                      "jacket_color": cols[1], "bottom": "pants", "bottom_color": cols[2], "shoe_color": cols[3],
-                      "hat": "none", "hat_color": cols[1], "backpack": False}
-            mesh, scale = A.humanoid(params)
-            sid = f"humanoid22_{ei}"
-            skeletons[sid] = S.skeleton_doc(scale, sid)
-            meshes.append({"id": mid, **mesh})
+            from restage.render import export as RX
+            mesh, skel = RX.humanoid_to_numpy(np.array([h / 1.78, 1.0, 1.0, 1.0]), cols, mid, f"humanoid22_{ei}")
+            sid = skel["id"]
+            skeletons[sid] = skel
+            meshes.append({**mesh, "id": mid})
             track["pose"] = pose
         else:
             size = o["ent_size"][ei]

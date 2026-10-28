@@ -247,9 +247,12 @@ def compute_losses(out, batch: dict, bm: dict, tgt: dict, render: bool = False, 
     tl = _take(t, lg, 1)
     psi = geom.heading(_take(geom.rot6d_to_mat(out["cam_rot6d"]), _take(anchor, lg, 1), 1))
     centers = ((out["box_center"] + tl[:, :, None, :])[..., None, :] @ Gl[:, :, None].swapaxes(-1, -2))[..., 0, :]
-    pts = box_points(centers, out["box_size"], out["box_yaw"] - psi[..., None], out["box_round"])   # [B,Lp,NB,M,3]
-    NB, M = pts.shape[2], pts.shape[3]
-    pts = pts.reshape(B, Lp, NB * M, 3)
+    from restage.render import shapes as RS
+    NB = centers.shape[2]
+    bv, _, _ = RS.rounded_boxes(centers.reshape(B * Lp, NB, 3), out["box_size"].reshape(B * Lp, NB, 3),
+                                (out["box_yaw"] - psi[..., None]).reshape(B * Lp, NB), out["box_round"].reshape(B * Lp, NB))
+    M = bv.shape[1] // NB                                                             # 56 vertices per box
+    pts = bv.reshape(B, Lp, NB * M, 3)
     w = mx.repeat(mx.sigmoid(out["box_logit"]), M, axis=2)                            # [B,Lp,NB*M]
     gpts = _take(bm["loc_points"], lg, 1)                                             # [B,Lp,N,3]
     gw = _take(mx.array(tgt["pt_w"]), lg, 1) * lvalid[..., None]

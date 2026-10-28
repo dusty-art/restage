@@ -88,19 +88,21 @@ def load(path: Path) -> tuple[Restage, Config]:
     return model, cfg
 
 
-def make_step(model, feats_fn):
-    def loss_fn(model, feats, batch, bm, tgt):
+def make_step(model, feats_fn, seed=0):
+    rng = np.random.default_rng(seed)
+
+    def loss_fn(model, feats, batch, bm, tgt, render):
         out = model(feats, bm)
-        total, parts, metrics, _ = compute_losses(out, batch, bm, tgt)
+        total, parts, metrics, _ = compute_losses(out, batch, bm, tgt, render=render, rng=rng)
         return total, (parts, metrics)
 
     vg = nn.value_and_grad(model, loss_fn)
 
-    def step(batch):
+    def step(batch, render=False):
         feats = feats_fn(batch["frames"], batch["key_mask"])
         bm = to_mx(batch)
         tgt = prepare_targets(batch)
-        (loss, (parts, metrics)), grads = vg(model, feats, batch, bm, tgt)
+        (loss, (parts, metrics)), grads = vg(model, feats, batch, bm, tgt, render)
         return loss, parts, metrics, grads
     return step
 
@@ -135,6 +137,7 @@ def main():
     ap.add_argument("--resume", default="")
     ap.add_argument("--fake", action="store_true", help="random batches that follow the data contract (smoke test)")
     ap.add_argument("--mem-gb", type=float, default=10.0)
+    ap.add_argument("--render-from", type=int, default=-1, help="step at which the re-render loss switches on (-1 = never)")
     args = ap.parse_args()
     mx.set_memory_limit(int(args.mem_gb * (1 << 30)))
     out_dir = Path(args.out)
@@ -164,7 +167,11 @@ def main():
     for it in range(start, args.steps):
         opt.learning_rate = lr_at(it, args.lr, args.warmup, args.steps)
         batch = next(train_it)
-        loss, parts, metrics, grads = step_fn(batch)
+        render = args.render_from >= 0 and it >= args.render_from
+        loss, parts, metrics, grads = step_fn(batch, render=render)
+        if not all(np.isfinite(float(v)) for v in [loss]):
+            print(f"step {it}: non-finite loss, batch skipped", flush=True)
+            continue
         grads, gnorm = optim.clip_grad_norm(grads, args.clip)
         opt.update(model, grads)
         mx.eval(model.parameters(), opt.state, loss, parts, metrics)
