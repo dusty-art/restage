@@ -25,7 +25,8 @@ class Config:
     heads: int = 6
     feat_dim: int = 384
     grid: tuple[int, int] = (9, 16)
-    shot_blocks: int = 6
+    spatial_blocks: int = 2      # full self-attention within each keyframe (adapts DINOv2 tokens)
+    cam_blocks: int = 4          # camera token reads its keyframe, then attends to its shot
     temporal_blocks: int = 2
     n_locs: int = 4
     n_ents: int = 10
@@ -52,8 +53,9 @@ class Restage(nn.Module):
         self.time_in = nn.Linear(16, d)
         self.shot_in = nn.Linear(16, d)                         # sinusoidal shot index → any number of shots
         # shot encoder: spatial (within keyframe) then temporal (camera tokens within the shot)
-        self.spatial = [Block(d, cfg.heads) for _ in range(cfg.shot_blocks)]
-        self.temporal = [Block(d, cfg.heads) for _ in range(cfg.shot_blocks)]
+        self.spatial = [Block(d, cfg.heads) for _ in range(cfg.spatial_blocks)]
+        self.cam_read = [CrossBlock(d, cfg.heads) for _ in range(cfg.cam_blocks)]
+        self.temporal = [Block(d, cfg.heads) for _ in range(cfg.cam_blocks)]
         self.shot_norm = nn.LayerNorm(d)
         # locations
         self.loc_slots = SlotAttention(d, cfg.n_locs, cfg.slot_iters)
@@ -108,14 +110,16 @@ class Restage(nn.Module):
         eye = mx.eye(K, dtype=mx.bool_)[None]
         tmask = mx.where(same | eye, 0.0, NEG)[:, None]                                  # [B,1,K,K]
 
-        for sp, tp in zip(self.spatial, self.temporal):
+        for sp in self.spatial:
             tok = sp(tok)
-            t = tok.reshape(B, K, P + 1, d)
-            c = tp(t[:, :, 0], mask=tmask)
-            tok = mx.concatenate([c[:, :, None], t[:, :, 1:]], axis=2).reshape(B * K, P + 1, d)
         tok = tok.reshape(B, K, P + 1, d)
-        cam = self.shot_norm(tok[:, :, 0])                                                # [B,K,d]
+        cam = tok[:, :, 0]
         pat = tok[:, :, 1:]                                                               # [B,K,P,d]
+        patf = pat.reshape(B * K, P, d)
+        for rd, tp in zip(self.cam_read, self.temporal):
+            cam = rd(cam.reshape(B * K, 1, d), patf).reshape(B, K, d)                     # read own keyframe
+            cam = tp(cam, mask=tmask)                                                     # then the rest of the shot
+        cam = self.shot_norm(cam)                                                         # [B,K,d]
 
         # ---------------------------------------------------------- shots → locations
         km = key_mask.astype(cam.dtype)

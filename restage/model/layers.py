@@ -33,7 +33,15 @@ class Attention(nn.Module):
         v = self.v(ctx).reshape(B, K, self.heads, self.hd).transpose(0, 2, 1, 3)
         if mask is not None:
             mask = mask.astype(q.dtype)
-        o = mx.fast.scaled_dot_product_attention(q, k, v, scale=1.0 / math.sqrt(self.hd), mask=mask)
+        scale = 1.0 / math.sqrt(self.hd)
+        if Q <= 8:
+            # The fused kernel's short-query path has no backward; short queries are cheap to do by hand.
+            s = (q @ k.swapaxes(-1, -2)) * scale
+            if mask is not None:
+                s = s + mask
+            o = mx.softmax(s.astype(mx.float32), axis=-1).astype(q.dtype) @ v
+        else:
+            o = mx.fast.scaled_dot_product_attention(q, k, v, scale=scale, mask=mask)
         return self.o(o.transpose(0, 2, 1, 3).reshape(B, Q, -1))
 
 
