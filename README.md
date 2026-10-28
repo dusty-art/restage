@@ -108,7 +108,13 @@ cp runs/v1/best.safetensors checkpoints/restage.safetensors && cp runs/v1/best.j
 
 Tests: `pytest tests`.
 
-## Licences
+## Licence
 
-Code: no licence chosen yet (all rights reserved until one is added). DINOv2-S weights: Apache-2.0 (Meta), downloaded from Hugging Face without a
-sign-up. All training data is generated on the laptop by `restage.gen` from original assets.
+Everything in this repository (code, docs and research reports) is MIT, see [LICENSE](LICENSE).
+
+Things it uses but doesn't contain keep their own licences:
+
+* DINOv2-S weights: Apache-2.0 (Meta), downloaded from Hugging Face on first use, no sign-up.
+* Python and npm dependencies (MLX, three.js, mp4-muxer and the rest): their own licences.
+* Training data is generated on the laptop by `restage.gen` from original assets, so it carries no
+  third-party terms. Real clips used for testing are not distributed here.

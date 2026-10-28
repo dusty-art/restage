@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Video in, animated low-poly 3D replica out: locations, persistent entities, shot cameras and the edit"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "numpy",
     "scipy",
