@@ -313,7 +313,7 @@ export class Timeline {
       const s = b.doc.shots[h.index];
       const cam = b.camByShot.get(s.id);
       const fov = cam ? cam.doc.track.fov.data[0] : 0;
-      text = `<b>Shot ${h.index + 1}</b> · ${b.locById.get(s.location)?.doc.name ?? s.location}<br>${s.size ?? ""} · ${s.move ?? ""} · ${focalMM(fov).toFixed(0)} mm<br>${fmtTime(s.start / b.doc.fps)}–${fmtTime(s.end / b.doc.fps)} (${((s.end - s.start) / b.doc.fps).toFixed(2)} s)${s.transition && s.transition !== "cut" ? " · " + s.transition : ""}`;
+      text = `<b>Shot ${h.index + 1}</b> · ${b.locById.get(s.location)?.doc.name ?? s.location}<br>${s.size ?? ""} · ${s.move ?? ""} · ${focalMM(fov).toFixed(0)} mm<br>${fmtTime(s.start / b.doc.fps)}–${fmtTime(s.end / b.doc.fps)} (${((s.end - s.start) / b.doc.fps).toFixed(2)} s)${s.transition && s.transition !== "cut" ? " · " + s.transition : ""}${s.time_skip ? `<br>time skip: ${s.time_skip.toFixed(1)} s later` : ""}`;
     } else if (h.kind === "cont" && h.index >= 0) {
       const c = b.doc.continuity![h.index];
       text = `<b>${c.kind}</b>${c.entity ? " · " + (b.doc.entities.find((x) => x.id === c.entity)?.name ?? c.entity) : ""}<br>${c.detail ?? ""}`;

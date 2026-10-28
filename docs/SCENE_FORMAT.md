@@ -150,6 +150,20 @@ entity transform `T(position[t]) · R(rotation[t]) · S(scale[t])`. Skinned
 vertices use linear blend skinning with the rest pose (all `pose` identity) as
 the bind pose.
 
+## Optional keys (version 1)
+
+Adopted from the generator (`restage/gen/FORMAT_NOTES.md`); readers that don't know them can ignore them.
+
+| where | key | meaning |
+|---|---|---|
+| prop | `cast_shadow` | bool, default true; false for single-sided room shells and distant backdrops |
+| entity | `identity` | entities with the same value are the same person or object (one entity per location they visit, or per wardrobe) |
+| skeleton | `base`, `scale` | `"base": "humanoid22"` means humanoid22's joint names and order, with offsets scaled by `scale` |
+| shot | `world_frame` | frame on a continuous world clock where the shot starts |
+| shot | `time_skip` | seconds skipped since the previous shot in the same location (an ellipsis, not an error) |
+| environment | `ground`, `fog` | hemisphere ground colour; fog `{color, near, far}` in linear RGB and metres |
+| continuity | `replacement` | for wardrobe errors: the entity that replaces this one from the cut onward |
+
 ## Versioning
 
 Readers must reject unknown major versions and ignore unknown keys, so later

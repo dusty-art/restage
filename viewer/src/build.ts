@@ -209,7 +209,8 @@ export function buildScene(doc: SceneDoc): Built {
       if (p.position) mesh.position.fromArray(p.position);
       if (p.rotation) mesh.quaternion.fromArray(p.rotation);
       if (p.scale) mesh.scale.fromArray(p.scale);
-      mesh.castShadow = true;
+      // Single-sided room shells and distant backdrops opt out, or they would shadow everything inside.
+      mesh.castShadow = p.cast_shadow ?? true;
       mesh.receiveShadow = true;
       props.add(mesh);
       meshTris += (g.index?.count ?? 0) / 3;

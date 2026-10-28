@@ -52,6 +52,7 @@ export interface Prop {
   position?: Vec3;
   rotation?: Quat;
   scale?: Vec3;
+  cast_shadow?: boolean;
 }
 
 export interface LocationDoc {
@@ -80,6 +81,7 @@ export interface EntityDoc {
   location?: string;
   mesh: string;
   skeleton?: string;
+  identity?: string;
   track: Track;
 }
 
@@ -98,6 +100,8 @@ export interface ShotDoc {
   size?: string;
   move?: string;
   transition?: string;
+  world_frame?: number;
+  time_skip?: number;
 }
 
 export interface ContinuityDoc {

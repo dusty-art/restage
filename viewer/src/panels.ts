@@ -184,6 +184,10 @@ export class Panels {
       const d = Math.hypot(p[f * 3] - p[f0 * 3], p[f * 3 + 2] - p[f0 * 3 + 2]);
       kv("Speed", `${((d / Math.max(1, f - f0)) * fps).toFixed(2)} m/s`);
       kv("Mesh", `${Math.round(e.tris).toLocaleString()} triangles${e.bones.length ? ` · ${e.bones.length} joints` : ""}`);
+      if (e.doc.identity) {
+        const same = b.entities.filter((x) => x !== e && x.doc.identity === e.doc.identity);
+        if (same.length) kv("Same identity", same.map((x) => `${x.doc.name ?? x.doc.id} (${x.location?.doc.name ?? "?"})`).join(", "));
+      }
       const shots = doc.shots.filter((sh) => {
         if (!tr.state) return true;
         for (let t = sh.start; t < sh.end; t++) if (tr.state.data[t] === 2) return true;
@@ -197,6 +201,7 @@ export class Panels {
       kv("Time", `${fmtTime(sh.start / fps)} – ${fmtTime(sh.end / fps)}`);
       kv("Length", `${((sh.end - sh.start) / fps).toFixed(2)} s · ${sh.end - sh.start} frames`);
       kv("Begins with", sh.transition ?? "cut");
+      if (sh.time_skip) kv("Time skip", `${sh.time_skip.toFixed(1)} s after the previous shot here`);
       if (cv) {
         const fov = cv.doc.track.fov.data;
         kv("Lens", `${focalMM(fov[0]).toFixed(0)} mm (${fov[0].toFixed(1)}° vertical)`);
