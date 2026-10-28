@@ -19,9 +19,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "matplotlib"]   # matplotlib: a render test writes a PNG preview
 # only for the benchmarks and parity checks in research/ and restage/data/dinov2.py
-research = ["torch", "transformers", "coremltools", "matplotlib"]
+research = ["torch", "transformers", "coremltools"]
 
 [build-system]
 requires = ["setuptools>=77"]

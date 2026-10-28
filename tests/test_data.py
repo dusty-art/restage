@@ -46,7 +46,7 @@ def samples(tmp_path_factory):
     d = tmp_path_factory.mktemp("gen")
     out = {}
     # seeds outside every dataset split's range (make_dataset.SPLIT_BASE), so the cut detector never saw them
-    for genre, seed, secs in (("talking", 5000011, 7), ("hiking", 5000004, 12), ("driving", 5000002, 8),
+    for genre, seed, secs in (("talking", 5000011, 7), ("hiking", 5000004, 12), ("driving", 5000002, 12),
                               ("interview", 5000004, 8)):
         base = _gen(d, genre, seed, secs)
         clip = P.pack(base, d / f"{genre}.npz")
