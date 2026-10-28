@@ -1,0 +1,31 @@
+[project]
+name = "restage"
+version = "0.1.0"
+description = "Video in, animated low-poly 3D replica out: locations, persistent entities, shot cameras and the edit"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy",
+    "scipy",
+    "mlx>=0.32",
+    "opencv-python-headless",
+    "pillow",
+    "moderngl",
+    "huggingface_hub",
+    "safetensors",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+# only for the benchmarks and parity checks in research/ and restage/data/dinov2.py
+research = ["torch", "transformers", "coremltools", "matplotlib"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["restage*"]

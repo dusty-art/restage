@@ -12,3 +12,4 @@ viewer/dist/
 .pytest_cache/
 research/05_experiments/out/*.mp4
 research/05_experiments/mvdump
+.claude/
