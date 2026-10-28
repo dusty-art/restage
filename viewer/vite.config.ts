@@ -78,6 +78,6 @@ function devSave(): Plugin {
 
 export default defineConfig({
   plugins: [samples(), devSave()],
-  server: { port: 5178, strictPort: true, host: "127.0.0.1" },
+  server: { port: 5178, strictPort: true, host: "127.0.0.1", proxy: { "/api": "http://127.0.0.1:5179" } },
   build: { target: "es2022", chunkSizeWarningLimit: 2000 },
 });

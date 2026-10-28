@@ -57,6 +57,8 @@ top.innerHTML = `
   <div class="scene-pick"><button class="btn ghost" id="scene-btn"><span id="scene-name">No scene</span> ▾</button><div class="menu" id="scene-menu"></div></div>
   <button class="btn ghost" id="open-btn" title="Open a .restage scene and its source video">Open…</button>
   <input type="file" id="file-in" accept=".restage,.mp4,.webm,.mov" multiple hidden />
+  <button class="btn" id="recon-btn" title="Upload a video and rebuild it in 3D with the Restage model">Reconstruct video…</button>
+  <input type="file" id="recon-in" accept="video/*,.mp4,.mov,.webm,.mkv" hidden />
   <div class="seg" id="modes">
     <button data-mode="replica" title="Through the original cameras, with the original cuts (1)">Replica</button>
     <button data-mode="explore" title="Free camera around the current location (2)">Explore</button>
@@ -483,6 +485,75 @@ window.addEventListener("drop", (e) => {
   app.classList.remove("dragging");
   if (e.dataTransfer?.files.length) void loadFiles([...e.dataTransfer.files]);
 });
+
+// ---------------------------------------------------------------- reconstruction jobs (restage.server)
+const reconIn = $<HTMLInputElement>("#recon-in");
+$<HTMLButtonElement>("#recon-btn").onclick = async () => {
+  let health: { model_ready: boolean } | null = null;
+  try {
+    const r = await fetch("/api/health");
+    if (r.ok) health = await r.json();
+  } catch { /* server down */ }
+  if (!health) {
+    toast("The reconstruction server isn't running. Start it with: python -m restage.server", 7000, true);
+    return;
+  }
+  if (!health.model_ready) {
+    toast("The server is up, but there's no trained Restage checkpoint yet.", 6000, true);
+    return;
+  }
+  reconIn.click();
+};
+reconIn.onchange = () => {
+  const f = reconIn.files?.[0];
+  reconIn.value = "";
+  if (f) void reconstruct(f);
+};
+
+async function reconstruct(file: File) {
+  const card = el("div", "job-card", `<div class="job-title">Reconstructing <b></b></div><div class="job-stage">Uploading…</div><div class="bar"><i></i></div>`);
+  card.querySelector("b")!.textContent = file.name;
+  document.body.appendChild(card);
+  const stage = card.querySelector(".job-stage") as HTMLDivElement;
+  const bar = card.querySelector(".bar i") as HTMLElement;
+  const setP = (p: number, text: string) => {
+    bar.style.width = `${Math.round(p * 100)}%`;
+    stage.textContent = text;
+  };
+  try {
+    const job = await new Promise<{ id: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/reconstruct");
+      xhr.upload.onprogress = (e) => e.lengthComputable && setP((e.loaded / e.total) * 0.1, `Uploading… ${Math.round((e.loaded / e.total) * 100)}%`);
+      xhr.onload = () => (xhr.status < 300 ? resolve(JSON.parse(xhr.responseText)) : reject(new Error(JSON.parse(xhr.responseText).detail ?? xhr.statusText)));
+      xhr.onerror = () => reject(new Error("upload failed"));
+      const fd = new FormData();
+      fd.append("video", file);
+      xhr.send(fd);
+    });
+    for (;;) {
+      await new Promise((r) => setTimeout(r, 500));
+      const j = await (await fetch(`/api/jobs/${job.id}`)).json();
+      if (j.state === "error") throw new Error(j.error);
+      setP(0.1 + j.progress * 0.9, j.state === "queued" ? "Waiting for the model…" : j.stage);
+      if (j.state === "done") {
+        setP(1, `Done in ${j.elapsed.toFixed(1)} s`);
+        await refreshSamples();
+        const s = samples.find((x) => x.name === j.name);
+        if (s) {
+          await loadSample(s);
+          store.set({ mode: "compare" });
+        }
+        setTimeout(() => card.remove(), 4000);
+        return;
+      }
+    }
+  } catch (e) {
+    card.classList.add("err");
+    setP(1, `Failed: ${(e as Error).message}`);
+    setTimeout(() => card.remove(), 9000);
+  }
+}
 
 // ---------------------------------------------------------------- toasts
 const toasts = el("div", "toasts");
