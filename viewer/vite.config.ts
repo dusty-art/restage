@@ -19,7 +19,9 @@ function samples(): Plugin {
             .sort()
             .map((f) => {
               const base = f.slice(0, -".restage".length);
-              const video = files.find((v) => v === `${base}.mp4` || v === `${base}.webm`);
+              // a model replica "X_replica.restage" plays against its source "X.mp4"
+              const src = base.replace(/_replica$/, "");
+              const video = files.find((v) => v === `${base}.mp4` || v === `${base}.webm`) ?? files.find((v) => v === `${src}.mp4` || v === `${src}.webm`);
               const st = fs.statSync(path.join(SAMPLES, f));
               return { name: base, scene: `/samples/${f}`, video: video ? `/samples/${video}` : null, bytes: st.size, mtime: st.mtimeMs };
             });
