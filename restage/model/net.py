@@ -50,7 +50,7 @@ class Restage(nn.Module):
         self.pos = mx.random.normal((gh * gw, d)) * 0.02
         self.cam_tok = mx.random.normal((d,)) * 0.02
         self.time_in = nn.Linear(16, d)
-        self.shot_emb = mx.random.normal((cfg.max_shots, d)) * 0.02
+        self.shot_in = nn.Linear(16, d)                         # sinusoidal shot index → any number of shots
         # shot encoder: spatial (within keyframe) then temporal (camera tokens within the shot)
         self.spatial = [Block(d, cfg.heads) for _ in range(cfg.shot_blocks)]
         self.temporal = [Block(d, cfg.heads) for _ in range(cfg.shot_blocks)]
@@ -99,7 +99,8 @@ class Restage(nn.Module):
         x = self.patch_in(patches.reshape(B, K, P, -1)) + self.pos                       # [B,K,P,d]
         shot_onehot = (key_shot[..., None] == mx.arange(S)).astype(x.dtype)              # [B,K,S]
         tfeat = self.time_in(self._time_features(batch["key_time"]))
-        cam = self.cam_tok + self.cls_in(cls) + tfeat + shot_onehot @ self.shot_emb[:S]   # [B,K,d]
+        sfeat = self.shot_in(self._time_features(key_shot.astype(mx.float32) * 0.37))
+        cam = self.cam_tok + self.cls_in(cls) + tfeat + sfeat                               # [B,K,d]
         tok = mx.concatenate([cam[:, :, None], x], axis=2).reshape(B * K, P + 1, d)
 
         # temporal mask: camera tokens attend to camera tokens of the same shot
