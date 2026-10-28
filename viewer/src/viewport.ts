@@ -2,6 +2,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { ENTITY_COLORS, poseAt, type Built, type EntityView, type LocationView, type Style } from "./build";
+
+const OVERLAY = new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.55, depthWrite: false });
 import type { Store } from "./state";
 
 export interface Rect { x: number; y: number; w: number; h: number }
@@ -88,6 +90,7 @@ export class Viewport {
     this.scene.add(this.ring);
     store.on((keys) => {
       if (keys.includes("built")) this.setBuilt(store.s.built);
+      if (keys.includes("overlay")) this.setOverlay(store.s.overlay);
       if (keys.includes("mode") || keys.includes("exploreLocation")) this.frameLocation();
       if (keys.includes("shadows")) this.renderer.shadowMap.enabled = store.s.shadows;
       this.dirty = true;
@@ -103,6 +106,47 @@ export class Viewport {
   }
 
   invalidate(): void { this.dirty = true; }
+
+  private overlay: Built | null = null;
+  private overlayLoc = new Map<LocationView, LocationView>();   // replica location -> ground-truth location
+
+  /** Ground truth as a ghost: each GT location re-anchored on its first camera, like the model's output. */
+  private setOverlay(o: Built | null): void {
+    if (this.overlay) {
+      for (const l of this.overlay.locations) this.scene.remove(l.group);
+      this.overlay.dispose();
+    }
+    this.overlay = o;
+    this.overlayLoc.clear();
+    const b = this.built;
+    if (!o || !b) return;
+    for (const l of o.locations) {
+      const first = o.doc.shots.find((sh) => sh.location === l.doc.id);
+      const cam = first ? o.camByShot.get(first.id) : undefined;
+      if (!cam) continue;
+      const p = cam.doc.track.position.data;
+      const q = new THREE.Quaternion().fromArray(Array.from(cam.doc.track.rotation.data.subarray(0, 4)));
+      const f = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+      const psi = Math.atan2(-f.x, -f.z);
+      const pivot = new THREE.Group();
+      pivot.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), -psi);
+      l.group.position.set(-p[0], 0, -p[2]);
+      l.group.remove(l.helpers, l.hemi, l.sun, l.sun.target);
+      l.group.traverse((x) => {
+        const m = x as THREE.Mesh;
+        if (m.isMesh) { m.material = OVERLAY; m.castShadow = false; m.receiveShadow = false; }
+      });
+      pivot.add(l.group);
+      this.scene.add(pivot);
+      (l as { pivot?: THREE.Group }).pivot = pivot;
+      // the replica location whose first shot overlaps this GT location's first shot
+      const mid = first ? (first.start + first.end) / 2 : 0;
+      const rs = b.doc.shots.find((sh) => sh.start <= mid && mid < sh.end);
+      const rl = rs ? b.locById.get(rs.location) : undefined;
+      if (rl && !this.overlayLoc.has(rl)) this.overlayLoc.set(rl, l);
+    }
+    this.dirty = true;
+  }
 
   private setBuilt(b: Built | null): void {
     if (this.built) {
@@ -219,6 +263,7 @@ export class Viewport {
     this.renderer.clear();
     if (!b) return;
     poseAt(b, s.frame);
+    if (this.overlay) poseAt(this.overlay, s.frame);
     const loc = this.activeLocation();
     if (loc !== this.lastLoc && (s.mode === "explore" || s.mode === "map") && s.followEdit) {
       this.lastLoc = loc;
@@ -230,6 +275,14 @@ export class Viewport {
       l.group.visible = l === loc;
       l.helpers.visible = !replicaView;
       l.grid.visible = s.showGrid;
+    }
+    if (this.overlay) {
+      const gl = loc ? this.overlayLoc.get(loc) : undefined;
+      for (const l of this.overlay.locations) {
+        const pv = (l as { pivot?: THREE.Group }).pivot;
+        if (pv) pv.visible = s.showOverlay && l === gl;
+      }
+      for (const e of this.overlay.entities) e.root.visible = (e.root.userData.state as number) > 0;
     }
     for (const c of b.cameras) {
       c.marker.visible = s.showCameras;

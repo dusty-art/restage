@@ -105,6 +105,7 @@ const VIEW_TOGGLES: [keyof typeof store.s, string, string][] = [
   ["showCameras", "Cameras and their paths", "C"], ["showTrails", "Entity motion trails", "T"],
   ["showInferred", "Entities while unseen (ghosted)", "I"], ["showGrid", "Ground grid", "G"],
   ["shadows", "Shadows", ""], ["followEdit", "Explore follows the edit", "E"],
+  ["showOverlay", "Ground truth ghost (replicas only)", "O"],
 ];
 function renderViewMenu() {
   const m = $<HTMLDivElement>("#view-menu");
@@ -262,7 +263,7 @@ store.on((keys) => {
     if (Math.abs(video.currentTime - t) > 0.5 / s.built.doc.fps) video.currentTime = t;
   }
   if (keys.includes("loop")) T("tp-loop").classList.toggle("on", s.loop);
-  if (keys.some((k) => ["built", "videoUrl", "mode", "style", "showCameras", "showTrails", "showInferred", "showGrid", "shadows", "followEdit", "sceneName"].includes(k))) syncChrome();
+  if (keys.some((k) => ["built", "videoUrl", "mode", "style", "showCameras", "showTrails", "showInferred", "showGrid", "shadows", "followEdit", "sceneName", "showOverlay"].includes(k))) syncChrome();
   updateHud();
 });
 
@@ -429,6 +430,12 @@ async function loadSample(s: Sample) {
     const buf = await (await fetch(s.scene, { cache: "no-store" })).arrayBuffer();
     loadScene(buf, s.name);
     setVideo(s.video);
+    // a model replica X_replica: load the ground truth X as a ghost overlay when it exists
+    const gt = s.name.endsWith("_replica") ? samples.find((x) => x.name === s.name.slice(0, -"_replica".length)) : undefined;
+    if (gt) {
+      const gbuf = await (await fetch(gt.scene, { cache: "no-store" })).arrayBuffer();
+      store.set({ overlay: buildScene(parseRestage(gbuf)) });
+    }
     history.replaceState(null, "", `#${encodeURIComponent(s.name)}`);
   } catch (e) {
     toast(`Could not load ${s.name}: ${(e as Error).message}`, 6000, true);
@@ -441,7 +448,7 @@ function loadScene(buf: ArrayBuffer, name: string) {
   const doc = parseRestage(buf);
   const built = buildScene(doc);
   store.set({ built, sceneName: name, frame: 0, playing: false, selection: null, hiddenEntities: new Set(), followEntity: null,
-    exploreLocation: 0 });
+    exploreLocation: 0, overlay: null });
 }
 
 let objectUrl: string | null = null;
@@ -588,6 +595,7 @@ window.addEventListener("keydown", (e) => {
   else if (k === "g") store.set({ showGrid: !s.showGrid });
   else if (k === "i") store.set({ showInferred: !s.showInferred });
   else if (k === "e") store.set({ followEdit: !s.followEdit });
+  else if (k === "o") store.set({ showOverlay: !s.showOverlay });
   else if (k === "f") {
     const sel = s.selection;
     store.set({ followEntity: sel?.kind === "entity" && s.followEntity !== sel.index ? sel.index : null,

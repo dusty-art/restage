@@ -32,6 +32,8 @@ export interface State {
   compareKind: CompareKind;
   wipe: number;             // 0..1, share of the frame showing the source video
   hiddenEntities: Set<number>;
+  overlay: Built | null;    // ground-truth scene drawn as a ghost over a model replica
+  showOverlay: boolean;
 }
 
 export class Store extends EventTarget {
@@ -57,6 +59,8 @@ export class Store extends EventTarget {
     compareKind: "wipe",
     wipe: 0.5,
     hiddenEntities: new Set(),
+    overlay: null,
+    showOverlay: true,
   };
 
   set(patch: Partial<State>): void {
